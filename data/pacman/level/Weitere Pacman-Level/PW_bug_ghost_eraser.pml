@@ -4,5 +4,5 @@ W W W W W W W W
 W D E D PP E D W 
 W W W W W D W W 
 W W W W W W W W 
-sp:2,1,,
-sp:5,1,GHOST_PASSIVE,
+sp:2,1,,direction:EAST
+sp:5,1,GHOST_PASSIVE,direction:EAST
