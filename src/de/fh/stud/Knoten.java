@@ -16,7 +16,15 @@ public class Knoten {
     public static final byte[][] NEIGHBOUR_POS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
     private static PacmanTileType[][] STATIC_WORLD;
     private static final short COST_LIMIT = 1000;
-    private static final byte POWERPILL_DURATION = 9; // 1 mehr, da bei 0 Effekt aufhoert
+/*
+    private static final byte POWERPILL_DURATION = 9 ; // 1 mehr, da bei 0 Effekt aufhoert
+*/
+
+    //region BUG
+    // TODO: FIX
+    /*Debug: Erzeugt Bug bei PW_easy_01_powerpill_(2) (BUG)*/
+    private static final byte POWERPILL_DURATION = 10; // Damit auch ohne Powerpill-Effekt auf einem Geist gegangen wird
+    // endregion
 
     private final Knoten pred;
     private final byte[][] view;
