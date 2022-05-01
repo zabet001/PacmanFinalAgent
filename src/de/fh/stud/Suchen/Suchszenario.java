@@ -16,9 +16,7 @@ public class Suchszenario {
 
     private final boolean isStateProblem;
 
-    public Suchszenario(IAccessibilityChecker accessCheck, IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
-        this(true, accessCheck, goalPred, heuristicFunc, (ICallbackFunction[]) null);
-    }
+    // region Konstruktoren
 
     public Suchszenario(boolean isStateProblem, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
                         IHeuristicFunction heuristicFunc) {
@@ -34,14 +32,42 @@ public class Suchszenario {
         this.callbackFuncs = callbackFuncs;
     }
 
+    public Suchszenario(IAccessibilityChecker accessCheck, IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
+        this(true, accessCheck, goalPred, heuristicFunc, (ICallbackFunction[]) null);
+    }
+    //endregion
+
+    /**
+     Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
+     */
     public static Suchszenario eatAllDots() {
-        return new Suchszenario(Zugangsfilter.safeToWalkOn(true), Zielfunktionen.allDotsEaten(),
+        return Suchszenario.eatAllDots(true, false);
+    }
+
+    /**
+     @param carefulMode - AccessibilityChecker: bei true: Feldern mit benachbarten Geister werden ignoriert
+     */
+    public static Suchszenario eatAllDots(boolean carefulMode, boolean ignorePowerpill) {
+        return new Suchszenario(carefulMode ? Zugangsfilter.nonDangerousEnvironment(ignorePowerpill) :
+                Zugangsfilter.nonDangerousField(ignorePowerpill), Zielfunktionen.allDotsEaten(),
                 Heuristikfunktionen.remainingDots());
     }
 
+    /**
+     Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
+     */
     public static Suchszenario findDestination(int goalX, int goalY) {
-        return new Suchszenario(false, Zugangsfilter.safeToWalkOn(true), Zielfunktionen.reachedDestination(goalX,
-                goalY), Heuristikfunktionen.manhattanToTarget(goalX, goalY));
+        return Suchszenario.findDestination(true, false, goalX, goalY);
+    }
+
+    /**
+     @param carefulMode - AccessibilityChecker: bei true: Feldern mit benachbarten Geister werden ignoriert
+     @param ignorePowerpill - bei true: auch im powerpillMode wird nicht in geister expandiert
+     */
+    public static Suchszenario findDestination(boolean carefulMode, boolean ignorePowerpill, int goalX, int goalY) {
+        return new Suchszenario(false, carefulMode ? Zugangsfilter.nonDangerousEnvironment(ignorePowerpill) :
+                Zugangsfilter.nonDangerousField(ignorePowerpill), Zielfunktionen.reachedDestination(goalX, goalY),
+                Heuristikfunktionen.manhattanToTarget(goalX, goalY));
     }
 
     public static Suchszenario locateDeadEndExit(byte[][] markedAsOneWays) {

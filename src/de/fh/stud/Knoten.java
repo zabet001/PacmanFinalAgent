@@ -16,15 +16,20 @@ public class Knoten {
     public static final byte[][] NEIGHBOUR_POS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
     private static PacmanTileType[][] STATIC_WORLD;
     private static final short COST_LIMIT = 1000;
+    private static final byte POWERPILL_DURATION = 9; // 1 mehr, da bei 0 Effekt aufhoert
 
     private final Knoten pred;
     private final byte[][] view;
+
     private byte posX, posY;
+
+    private byte powerpillTimer; // != 0: unverwundbar
     private final short cost;
 
     private final int heuristic;
-    // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichern
 
+    // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichern
+    // Problem: Wie den Code auslagern?
     public static Knoten generateRoot(PacmanTileType[][] world, int posX, int posY) {
         Knoten.STATIC_WORLD = world;
         return new Knoten((byte) posX, (byte) posY);
@@ -49,7 +54,18 @@ public class Knoten {
                 this.view = pred.view;
             } else {
                 this.view = MyUtil.copyView(pred.view);
-                this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+                if (MyUtil.isGhostType(MyUtil.byteToTile(this.view[posX][posY]))) {
+                    if (MyUtil.byteToTile(this.view[posX][posY]) == PacmanTileType.GHOST_AND_DOT || MyUtil.byteToTile(this.view[posX][posY]) == PacmanTileType.GHOST_AND_POWERPILL)
+                        this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.GHOST);
+                } else
+                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+            }
+            if (pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.POWERPILL) || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.GHOST_AND_POWERPILL)) {
+                powerpillTimer = POWERPILL_DURATION;
+            } else {
+                powerpillTimer = pred.powerpillTimer;
+                if (powerpillTimer > 0) // tritt das wirklich nie ein?
+                    powerpillTimer--;
             }
         }
         this.cost = pred == null ? 0 : (short) (pred.cost + 1);
@@ -57,6 +73,7 @@ public class Knoten {
     }
 
     // region Klassenmethoden
+
     public static int nodeNeighbourCnt(Knoten node) {
         int neighbourCnt = 0;
         for (byte[] neighbour : NEIGHBOUR_POS) {
@@ -66,8 +83,8 @@ public class Knoten {
         }
         return neighbourCnt;
     }
-    // endregion
 
+    // endregion
     public boolean isPassable(byte newPosX, byte newPosY) {
         return Suche.getAccessCheck().isAccessible(this, newPosX, newPosY);
     }
@@ -81,7 +98,7 @@ public class Knoten {
                 children.add(new Knoten(this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        // children.add(new Knoten(this, posX, posY));
+        children.add(new Knoten(this, posX, posY));
 
         return children;
     }
@@ -145,7 +162,6 @@ public class Knoten {
     }
 
     // region Setup
-
     public int countDots() {
         int cnt = 0;
         for (byte[] rowVals : view) {
@@ -156,11 +172,13 @@ public class Knoten {
         }
         return cnt;
     }
-    // endregion
-    // region Debug
 
     // endregion
+
     // region Getter und Setter
+    public static PacmanTileType[][] getStaticWorld() {
+        return STATIC_WORLD;
+    }
 
     public byte[][] getView() {
         return view;
@@ -195,8 +213,8 @@ public class Knoten {
         return heuristic;
     }
 
-    public static PacmanTileType[][] getStaticWorld() {
-        return STATIC_WORLD;
+    public byte getPowerpillTimer() {
+        return powerpillTimer;
     }
 
     // endregion

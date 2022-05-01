@@ -8,7 +8,6 @@ import de.fh.stud.interfaces.IHeuristicFunction;
 public class Heuristikfunktionen {
     public static IHeuristicFunction remainingDots() {
         return node -> {
-            int ret;
             if (node.getPred() == null)
                 return node.countDots();
             else if (node.getPred().getView()[node.getPosX()][node.getPosY()] == MyUtil.tileToByte(PacmanTileType.DOT)

@@ -44,7 +44,7 @@ public class MyUtil {
         return ret;
     }
 
-    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX, int posY){
+    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX, int posY) {
         int neighbourCnt = 0;
         for (byte[] neighbour : Knoten.NEIGHBOUR_POS) {
             if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
@@ -54,7 +54,7 @@ public class MyUtil {
         return neighbourCnt;
     }
 
-    public static PacmanAction oppositeAction(PacmanAction action){
+    public static PacmanAction oppositeAction(PacmanAction action) {
         switch (action) {
             case GO_NORTH -> {
                 return PacmanAction.GO_SOUTH;
@@ -82,11 +82,17 @@ public class MyUtil {
         System.out.println(s);
     }
 
-    public static <T> T[] mergeArrays(T[] a, T[] b){
-        if(a == null) return b;
-        if(b == null) return a;
-        T[] ret = Arrays.copyOf(a,a.length+b.length);
-        System.arraycopy(b,0,ret,a.length,b.length);
+    public static <T> T[] mergeArrays(T[] a, T[] b) {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        T[] ret = Arrays.copyOf(a, a.length + b.length);
+        System.arraycopy(b, 0, ret, a.length, b.length);
         return ret;
+    }
+
+    public static boolean isGhostType(PacmanTileType type) {
+        return type == PacmanTileType.GHOST || type == PacmanTileType.GHOST_AND_DOT || type == PacmanTileType.GHOST_AND_POWERPILL;
     }
 }
