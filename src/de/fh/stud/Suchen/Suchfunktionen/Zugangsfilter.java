@@ -19,52 +19,31 @@ public class Zugangsfilter {
     }
 
     public static IAccessibilityChecker nonDangerousField() {
-        return nonDangerousField(false);
+        return (node, newPosX, newPosY) -> {
+            PacmanTileType field = MyUtil.byteToTile(node.getView()[newPosX][newPosY]);
+            if (node.getPowerpillTimer() > 0) {
+                return field != PacmanTileType.WALL;
+            }
+            return field == PacmanTileType.EMPTY || field == PacmanTileType.DOT || field == PacmanTileType.POWERPILL;
+        };
     }
 
-    public static IAccessibilityChecker nonDangerousField(boolean ignorePowerpill) {
-        if (ignorePowerpill) {
-            return (node, newPosX, newPosY) -> {
-                PacmanTileType field = MyUtil.byteToTile(node.getView()[newPosX][newPosY]);
-                return field == PacmanTileType.EMPTY || field == PacmanTileType.DOT || field == PacmanTileType.POWERPILL;
-            };
-        } else {
-            return (node, newPosX, newPosY) -> {
-                PacmanTileType field = MyUtil.byteToTile(node.getView()[newPosX][newPosY]);
-                if (node.getPowerpillTimer() != 0) {
-                    return field != PacmanTileType.WALL;
-                }
-                return field == PacmanTileType.EMPTY || field == PacmanTileType.DOT || field == PacmanTileType.POWERPILL;
-            };
-        }
-    }
-
-    public static IAccessibilityChecker nonDangerousEnvironment(boolean ignorePowerpill) {
-        if (ignorePowerpill) {
-            return (node, newPosX, newPosY) -> {
-                if (!nonDangerousField(true).isAccessible(node, newPosX, newPosY))
-                    return false;
-                for (byte[] neighbour : Knoten.NEIGHBOUR_POS) {
-                    if (MyUtil.isGhostType(MyUtil.byteToTile(node.getView()[newPosX + neighbour[0]][newPosY + neighbour[1]]))) {
-                        return false;
-                    }
-                }
+    public static IAccessibilityChecker nonDangerousEnvironment() {
+        return (node, newPosX, newPosY) -> {
+            if (!nonDangerousField().isAccessible(node, newPosX, newPosY))
+                return false;
+            if (node.getPowerpillTimer() > 0 || MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL)
                 return true;
-            };
-        } else {
-            return (node, newPosX, newPosY) -> {
-                if (!nonDangerousField(false).isAccessible(node, newPosX, newPosY))
-                    return false;
-                if (node.getPowerpillTimer() > 0 || MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL)
-                    return true;
-                for (byte[] neighbour : Knoten.NEIGHBOUR_POS) {
-                    if (MyUtil.isGhostType(MyUtil.byteToTile(node.getView()[newPosX + neighbour[0]][newPosY + neighbour[1]]))) {
-                        return false;
-                    }
-                }
+            if (node.getRemainingDots() == 1 && MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.DOT) {
                 return true;
-            };
-        }
+            }
+            for (byte[] neighbour : Knoten.NEIGHBOUR_POS) {
+                if (MyUtil.isGhostType(MyUtil.byteToTile(node.getView()[newPosX + neighbour[0]][newPosY + neighbour[1]]))) {
+                    return false;
+                }
+            }
+            return true;
+        };
     }
 
     public static IAccessibilityChecker noWall() {

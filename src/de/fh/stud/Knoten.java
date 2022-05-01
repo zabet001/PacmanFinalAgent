@@ -34,7 +34,7 @@ public class Knoten {
     private byte powerpillTimer; // != 0: unverwundbar
     private final short cost;
 
-    private final int heuristic;
+    private final short remainingDots;
 
     // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichern
     // Problem: Wie den Code auslagern?
@@ -56,28 +56,36 @@ public class Knoten {
             // Wurzelknoten
             this.view = MyUtil.createByteView(STATIC_WORLD);
             this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+
+            this.cost = 0;
+            this.remainingDots = countDots();
         } else {
             // Kindknoten
-            if (!Suche.isStateSearch() || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.EMPTY)) {
-                this.view = pred.view;
-            } else {
-                this.view = MyUtil.copyView(pred.view);
-                if (MyUtil.isGhostType(MyUtil.byteToTile(this.view[posX][posY]))) {
-                    if (MyUtil.byteToTile(this.view[posX][posY]) == PacmanTileType.GHOST_AND_DOT || MyUtil.byteToTile(this.view[posX][posY]) == PacmanTileType.GHOST_AND_POWERPILL)
-                        this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.GHOST);
-                } else
-                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
-            }
-            if (pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.POWERPILL) || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.GHOST_AND_POWERPILL)) {
+            if (MyUtil.isPowerpillType(MyUtil.byteToTile(pred.view[posX][posY]))) {
                 powerpillTimer = POWERPILL_DURATION;
             } else {
                 powerpillTimer = pred.powerpillTimer;
                 if (powerpillTimer > 0) // tritt das wirklich nie ein?
                     powerpillTimer--;
             }
+
+            if (!Suche.isStateSearch() || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.EMPTY)) {
+                this.view = pred.view;
+            } else {
+                this.view = MyUtil.copyView(pred.view);
+
+                if (MyUtil.isGhostType(MyUtil.byteToTile(this.view[posX][posY])))
+                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.GHOST);
+                else
+                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+            }
+            if (Suche.isStateSearch() && MyUtil.isDotType(MyUtil.byteToTile(pred.view[posX][posY])))
+                this.remainingDots = (short) (pred.remainingDots - 1);
+            else
+                this.remainingDots = pred.remainingDots;
+            this.cost = (short) (pred.cost + 1);
         }
-        this.cost = pred == null ? 0 : (short) (pred.cost + 1);
-        this.heuristic = Suche.getHeuristicFunc().calcHeuristic(this);
+
     }
 
     // region Klassenmethoden
@@ -157,7 +165,7 @@ public class Knoten {
         if (o == null || getClass() != o.getClass())
             return false;
         Knoten knoten = (Knoten) o;
-        return heuristic == knoten.heuristic && posX == knoten.posX && posY == knoten.posY && Arrays.deepEquals(view,
+        return remainingDots == knoten.remainingDots && posX == knoten.posX && posY == knoten.posY && Arrays.deepEquals(view,
                 knoten.view);
 
     }
@@ -170,8 +178,8 @@ public class Knoten {
     }
 
     // region Setup
-    public int countDots() {
-        int cnt = 0;
+    public short countDots() {
+        short cnt = 0;
         for (byte[] rowVals : view) {
             for (int col = 0; col < view[0].length; col++) {
                 if (rowVals[col] == MyUtil.tileToByte(PacmanTileType.DOT) || rowVals[col] == MyUtil.tileToByte(PacmanTileType.GHOST_AND_DOT))
@@ -213,17 +221,20 @@ public class Knoten {
         posY = (byte) pos.y;
     }
 
-    public int getCost() {
-        return cost;
-    }
-
-    public int getHeuristic() {
-        return heuristic;
-    }
-
     public byte getPowerpillTimer() {
         return powerpillTimer;
     }
 
+    public int getRemainingDots() {
+        return remainingDots;
+    }
+
+    public int getCost() {
+        return cost;
+    }
+
+    public int heuristicalValue() {
+        return Suche.getHeuristicFunc().calcHeuristic(this);
+    }
     // endregion
 }

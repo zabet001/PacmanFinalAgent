@@ -1,6 +1,7 @@
 package de.fh.stud.Suchen.Suchfunktionen;
 
 import de.fh.stud.Knoten;
+import de.fh.stud.MyUtil;
 import de.fh.stud.interfaces.IGoalPredicate;
 
 public class Zielfunktionen {
@@ -15,8 +16,14 @@ public class Zielfunktionen {
         };
     }
 
+    public static IGoalPredicate dotEaten(boolean isStateSearch) {
+        if (isStateSearch)
+            return node -> node.getPred() != null && node.getRemainingDots() < node.getPred().getRemainingDots();
+        return node -> node.getPred() != null && MyUtil.isDotType(MyUtil.byteToTile(node.getPred().getView()[node.getPosX()][node.getPosY()]));
+    }
+
     public static IGoalPredicate allDotsEaten() {
-        return node -> node.getHeuristic() == 0;
+        return node -> node.getRemainingDots() == 0;
     }
 
     //region Zielzustandsfunktionen

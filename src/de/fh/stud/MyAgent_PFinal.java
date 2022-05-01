@@ -13,17 +13,18 @@ import de.fh.stud.Suchen.Suchszenario;
 
 import java.util.List;
 
-public class MyAgent_P3 extends PacmanAgent_2021 {
+public class MyAgent_PFinal extends PacmanAgent_2021 {
 
     private List<PacmanAction> actionSequence;
     private Knoten loesungsKnoten;
+    private PacmanAction lastAction;
 
-    public MyAgent_P3(String name) {
+    public MyAgent_PFinal(String name) {
         super(name);
     }
 
     public static void main(String[] args) {
-        MyAgent_P3 agent = new MyAgent_P3("MyAgent");
+        MyAgent_PFinal agent = new MyAgent_PFinal("MyFinalAgent");
         Agent.start(agent, "127.0.0.1", 5000);
     }
 
@@ -34,26 +35,25 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
         //Wenn noch keine Lösung gefunden wurde, dann starte die Suche
-        if (loesungsKnoten == null) {
-            int goalx = 12;
-            int goaly = 1;
 
-            Suche suche = new Suche(Suchszenario.eatAllDots(true));
-            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                    Suche.SearchStrategy.A_STAR);
-            if (loesungsKnoten != null)
-                actionSequence = loesungsKnoten.identifyActionSequence();
-        }
+        int goalx = 1;
+        int goaly = 1;
+
+        Suche suche = new Suche(Suchszenario.eatNearestDot());
+        loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                Suche.SearchStrategy.A_STAR,false);
+        if (loesungsKnoten != null)
+            lastAction = loesungsKnoten.identifyActionSequence().get(0);
 
         //Wenn die Suche eine Lösung gefunden hat, dann ermittle die als nächstes auszuführende Aktion
-        if (actionSequence != null && actionSequence.size() != 0) {
-            return actionSequence.remove(0);
-        } else {
-            //Ansonsten wurde keine Lösung gefunden und der Pacman kann das Spiel aufgeben
-            return PacmanAction.QUIT_GAME;
+        if (lastAction != null) {
+            return lastAction;
         }
-
+        //Ansonsten wurde keine Lösung gefunden und der Pacman kann das Spiel aufgeben
+        return PacmanAction.QUIT_GAME;
     }
+
+
 
     @Override
     protected void onGameStart(PacmanStartInfo startInfo) {

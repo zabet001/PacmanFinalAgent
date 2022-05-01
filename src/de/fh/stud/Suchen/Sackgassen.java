@@ -26,7 +26,8 @@ public class Sackgassen {
         /** Tupel: (Sackgassenende,Vorgaenger), um spaterer das erste Feld in der Sackgasse wiederzufinden*/
         List<AbstractMap.SimpleEntry<Vector2, Vector2>> oneWays = oneWayEndsFirstOrder(world);
 
-        /* Schritt 2: Fuer alle Sackgassen: Anfangspos suchen und fuer Endpos ersetzen, dabei CALLBACK: ALLE besuchten Felder markieren mit cost -1
+        /* Schritt 2: Fuer alle Sackgassen: Anfangspos suchen und fuer Endpos ersetzen, dabei CALLBACK: ALLE
+        besuchten Felder markieren mit cost -1
          -> Sackgassen letzter Stufe werden "temporaer geschlossen": mehrstufige sackgassen werden einstufig*/
         for (int i = 0; i < oneWays.size(); i++) {
             AbstractMap.SimpleEntry<Vector2, Vector2> oneWayStartTuple = locateStartOfOneWay(world,
@@ -86,10 +87,8 @@ public class Sackgassen {
                                                                                  int posY) {
 
         Knoten oneWayStart = new Suche(Suchszenario.locateDeadEndExit(deadEndDepth),
-                CallbackFunktionen.setVisitedValue(deadEndDepth, (byte) -1))
-                /*CallbackFunktionen.saveVisited(blockedFields, blockedFieldType, false),
-                CallbackFunktionen.setVisitedValue(world,PacmanTileType.WALL))*/.start(world, posX, posY,
-                        Suche.SearchStrategy.DEPTH_FIRST, false);
+                CallbackFunktionen.setVisitedValue(deadEndDepth, (byte) -1)).start(world, posX, posY,
+                Suche.SearchStrategy.DEPTH_FIRST, false);
 
         if (oneWayStart == null)
             return null;

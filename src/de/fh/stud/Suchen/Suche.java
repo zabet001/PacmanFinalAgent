@@ -28,13 +28,8 @@ public class Suche {
     private static IHeuristicFunction HEURISTIC_FUNC;
     private static ICallbackFunction[] CALLBACK_FUNCS;
 
-    public Suche(boolean isStateSearch, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
-                 IHeuristicFunction heuristicFunc, ICallbackFunction... callbackFunctions) {
-        Suche.ACCESS_CHECK = accessCheck;
-        Suche.GOAL_PRED = goalPred != null ? goalPred : node -> false;
-        Suche.HEURISTIC_FUNC = heuristicFunc != null ? heuristicFunc : node -> 0;
-        Suche.CALLBACK_FUNCS = callbackFunctions != null ? callbackFunctions : new ICallbackFunction[]{expCand -> {}};
-        Suche.STATE_SEARCH = isStateSearch;
+    public enum SearchStrategy {
+        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
     }
 
     public Suche(Suchszenario searchScenario) {
@@ -48,8 +43,13 @@ public class Suche {
                         callbackFunctions));
     }
 
-    public enum SearchStrategy {
-        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
+    public Suche(boolean isStateSearch, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
+                 IHeuristicFunction heuristicFunc, ICallbackFunction... callbackFunctions) {
+        Suche.ACCESS_CHECK = accessCheck;
+        Suche.GOAL_PRED = goalPred != null ? goalPred : node -> false;
+        Suche.HEURISTIC_FUNC = heuristicFunc != null ? heuristicFunc : node -> 0;
+        Suche.CALLBACK_FUNCS = callbackFunctions != null ? callbackFunctions : new ICallbackFunction[]{expCand -> {}};
+        Suche.STATE_SEARCH = isStateSearch;
     }
 
     public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, boolean showResults) {
@@ -158,9 +158,9 @@ public class Suche {
 
     private Comparator<Knoten> getInsertionCriteria(SearchStrategy strategy) {
         return switch (strategy) {
-            case GREEDY -> Comparator.comparingInt(Knoten::getHeuristic);
+            case GREEDY -> Comparator.comparingInt(Knoten::heuristicalValue);
             case UCS -> Comparator.comparingInt(Knoten::getCost);
-            case A_STAR -> Comparator.comparingInt(a -> a.getCost() + a.getHeuristic());
+            case A_STAR -> Comparator.comparingInt(a -> a.getCost() + a.heuristicalValue());
             default -> null;
         };
     }

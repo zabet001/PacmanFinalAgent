@@ -95,4 +95,12 @@ public class MyUtil {
     public static boolean isGhostType(PacmanTileType type) {
         return type == PacmanTileType.GHOST || type == PacmanTileType.GHOST_AND_DOT || type == PacmanTileType.GHOST_AND_POWERPILL;
     }
+
+    public static boolean isDotType(PacmanTileType type) {
+        return type == PacmanTileType.DOT || type == PacmanTileType.GHOST_AND_DOT;
+    }
+
+    public static boolean isPowerpillType(PacmanTileType type) {
+        return type == PacmanTileType.POWERPILL || type == PacmanTileType.GHOST_AND_POWERPILL;
+    }
 }

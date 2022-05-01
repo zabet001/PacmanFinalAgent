@@ -38,35 +38,64 @@ public class Suchszenario {
     //endregion
 
     /**
-     Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
+     HINWEIS: Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
      */
     public static Suchszenario eatAllDots() {
-        return Suchszenario.eatAllDots(true, false);
+        return Suchszenario.eatAllDots(false);
     }
 
     /**
-     @param carefulMode - AccessibilityChecker: bei true: Feldern mit benachbarten Geister werden ignoriert
+     @param noEnemies - bei true: Geister werden wie leere Felder betrachtet
      */
-    public static Suchszenario eatAllDots(boolean carefulMode, boolean ignorePowerpill) {
-        return new Suchszenario(carefulMode ? Zugangsfilter.nonDangerousEnvironment(ignorePowerpill) :
-                Zugangsfilter.nonDangerousField(ignorePowerpill), Zielfunktionen.allDotsEaten(),
-                Heuristikfunktionen.remainingDots());
+    public static Suchszenario eatAllDots(boolean noEnemies) {
+        return new Suchszenario(noEnemies ? Zugangsfilter.noWall() : Zugangsfilter.nonDangerousEnvironment(),
+                Zielfunktionen.allDotsEaten(), Heuristikfunktionen.remainingDots());
     }
 
     /**
-     Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
+     HINWEIS: Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
+     */
+    public static Suchszenario eatNearestDot() {
+        return Suchszenario.eatNearestDot(false);
+    }
+
+    /**
+     @param noEnemies - bei true: Geister werden wie leere Felder betrachtet
+     */
+    public static Suchszenario eatNearestDot(boolean noEnemies) {
+        return Suchszenario.eatNearestDot(true, noEnemies);
+    }
+
+    /**
+     @param isStateProblem - Zusatzinformationen, wie verbleibende Anzahl Dots
+     @param noEnemies - bei true: Geister werden wie leere Felder betrachtet
+     */
+    public static Suchszenario eatNearestDot(boolean isStateProblem, boolean noEnemies) {
+        return new Suchszenario(isStateProblem, noEnemies ? Zugangsfilter.noWall() :
+                Zugangsfilter.nonDangerousEnvironment(), Zielfunktionen.dotEaten(isStateProblem), null);
+    }
+
+    /**
+     HINWEIS: Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
      */
     public static Suchszenario findDestination(int goalX, int goalY) {
-        return Suchszenario.findDestination(true, false, goalX, goalY);
+        return Suchszenario.findDestination(false, goalX, goalY);
     }
 
     /**
-     @param carefulMode - AccessibilityChecker: bei true: Feldern mit benachbarten Geister werden ignoriert
-     @param ignorePowerpill - bei true: auch im powerpillMode wird nicht in geister expandiert
+     @param noEnemies - bei true: auch im powerpillMode wird nicht in geister expandiert
      */
-    public static Suchszenario findDestination(boolean carefulMode, boolean ignorePowerpill, int goalX, int goalY) {
-        return new Suchszenario(false, carefulMode ? Zugangsfilter.nonDangerousEnvironment(ignorePowerpill) :
-                Zugangsfilter.nonDangerousField(ignorePowerpill), Zielfunktionen.reachedDestination(goalX, goalY),
+    public static Suchszenario findDestination(boolean noEnemies, int goalX, int goalY) {
+        return Suchszenario.findDestination(false, noEnemies, goalX, goalY);
+    }
+
+    /**
+     @param isStateProblem - Zusatzinformationen, wie verbleibende Anzahl Dots
+     @param noEnemies - bei true: Geister werden wie leere Felder betrachtet
+     */
+    public static Suchszenario findDestination(boolean isStateProblem, boolean noEnemies, int goalX, int goalY) {
+        return new Suchszenario(isStateProblem, noEnemies ? Zugangsfilter.noWall() :
+                Zugangsfilter.nonDangerousEnvironment(), Zielfunktionen.reachedDestination(goalX, goalY),
                 Heuristikfunktionen.manhattanToTarget(goalX, goalY));
     }
 
