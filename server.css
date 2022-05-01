@@ -1,0 +1,21 @@
+
+/*Quadrupple the height of sliders*/
+Slider .track {
+	-fx-pref-height: 16;
+}
+
+ToggleButton {
+	-fx-border-color: lightblue;
+	-fx-background-color: white;
+	/*Necessary to remove the 1px line under the bottom border*/
+	-fx-background-insets: 0 0 0 0;
+}
+ToggleButton:selected {
+	-fx-background-color: grey;
+}
+ToggleButton:focused {
+	-fx-border-color: grey;
+}
+ToggleButton:hover {
+	-fx-border-color: black;
+}

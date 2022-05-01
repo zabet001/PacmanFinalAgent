@@ -1,0 +1,3 @@
+--module-path /DEIN/PFAD/ZUM/javafx-sdk-VERSION/lib --add-modules=javafx.controls,javafx.fxml
+
+Bei MacOSX: Make sure the checkbox "Use the -XstartOnFirstThread argument when launching with SWT" is not checked. 
