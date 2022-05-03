@@ -28,11 +28,20 @@ public class Zielfunktionen {
 
     //region Zielzustandsfunktionen
     public static IGoalPredicate reachedDestination(int goalx, int goaly) {
-        return node -> node.getPosX() == goalx && node.getPosY() == goaly;
+        return node -> {
+            System.out.printf("Goal is [%d,%d]\n", goalx, goaly);
+            System.out.printf("expCand is [%d,%d]\n", node.getPosX(), node.getPosY());
+
+            return node.getPosX() == goalx && node.getPosY() == goaly;
+        };
+    }
+
+    public static IGoalPredicate notOnPosition(int startPosX, int startPosY) {
+        return node -> node.getPosX() != startPosX || node.getPosY() != startPosY;
     }
 
     public static IGoalPredicate minimumNeighbours(int numberOfNeighbours) {
-        return node -> Knoten.nodeNeighbourCnt(node) >= numberOfNeighbours;
+        return node -> node.nodeNeighbourCnt() >= numberOfNeighbours;
     }
 
 }

@@ -1,10 +1,7 @@
-package de.fh.stud;
+package de.fh.stud.Agenten;
 
 import de.fh.kiServer.agents.Agent;
-import de.fh.pacman.PacmanAgent_2021;
-import de.fh.pacman.PacmanGameResult;
-import de.fh.pacman.PacmanPercept;
-import de.fh.pacman.PacmanStartInfo;
+import de.fh.pacman.*;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
 import de.fh.pacman.enums.PacmanTileType;
@@ -38,6 +35,7 @@ public class PendelingAgent extends PacmanAgent_2021 {
      */
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
+
 
         if (percept.getView()[percept.getPosX() + (goingLeft ? -1 : 1)][percept.getPosY()] == PacmanTileType.WALL)
             goingLeft = !goingLeft;

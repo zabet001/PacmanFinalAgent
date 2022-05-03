@@ -4,6 +4,7 @@ import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.Suchen.Suche;
+import de.fh.stud.interfaces.IAccessibilityChecker;
 import de.fh.stud.interfaces.ICallbackFunction;
 
 import java.util.Arrays;
@@ -13,34 +14,30 @@ import java.util.Objects;
 
 public class Knoten {
 
-    public static final byte[][] NEIGHBOUR_POS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
     private static PacmanTileType[][] STATIC_WORLD;
     private static final short COST_LIMIT = 1000;
-/*
-    private static final byte POWERPILL_DURATION = 9 ; // 1 mehr, da bei 0 Effekt aufhoert
-*/
 
-    //region BUG
-    // TODO: FIX
-    /*Debug: Erzeugt Bug bei PW_easy_01_powerpill_(2) (BUG)*/
-    private static final byte POWERPILL_DURATION = 10; // Damit auch ohne Powerpill-Effekt auf einem Geist gegangen wird
-    // endregion
 
     private final Knoten pred;
     private final byte[][] view;
 
     private byte posX, posY;
 
-    private byte powerpillTimer; // != 0: unverwundbar
+    private final byte powerpillTimer; // != 0: unverwundbar
     private final short cost;
 
     private final short remainingDots;
 
     // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichern
     // Problem: Wie den Code auslagern?
+
     public static Knoten generateRoot(PacmanTileType[][] world, int posX, int posY) {
         Knoten.STATIC_WORLD = world;
-        return new Knoten((byte) posX, (byte) posY);
+        PacmanTileType zw = world[posX][posY];
+        world[posX][posY] = PacmanTileType.EMPTY;
+        Knoten ret = new Knoten((byte) posX, (byte) posY);
+        world[posX][posY] = zw;
+        return ret;
     }
 
     private Knoten(byte posX, byte posY) {
@@ -55,18 +52,16 @@ public class Knoten {
         if (pred == null) {
             // Wurzelknoten
             this.view = MyUtil.createByteView(STATIC_WORLD);
-            this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
 
             this.cost = 0;
             this.remainingDots = countDots();
+            this.powerpillTimer = Suche.isStateSearch() ? GameStateObserver.powerpillTimer : 0;
         } else {
             // Kindknoten
-            if (MyUtil.isPowerpillType(MyUtil.byteToTile(pred.view[posX][posY]))) {
-                powerpillTimer = POWERPILL_DURATION;
+            if (Suche.isStateSearch() && MyUtil.isPowerpillType(MyUtil.byteToTile(pred.view[posX][posY]))) {
+                powerpillTimer = GameStateObserver.POWERPILL_DURATION;
             } else {
-                powerpillTimer = pred.powerpillTimer;
-                if (powerpillTimer > 0) // tritt das wirklich nie ein?
-                    powerpillTimer--;
+                powerpillTimer = (byte) (pred.powerpillTimer - (pred.powerpillTimer > 0 ? 1 : 0));
             }
 
             if (!Suche.isStateSearch() || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.EMPTY)) {
@@ -90,31 +85,33 @@ public class Knoten {
 
     // region Klassenmethoden
 
-    public static int nodeNeighbourCnt(Knoten node) {
-        int neighbourCnt = 0;
+    public int nodeNeighbourCnt() {
+        return MyUtil.adjacentFreeFieldsCnt(this,posX,posY);
+
+/*        int neighbourCnt = 0;
         for (byte[] neighbour : NEIGHBOUR_POS) {
             if (node.isPassable((byte) (node.getPosX() + neighbour[0]), (byte) (node.getPosY() + neighbour[1]))) {
                 neighbourCnt++;
             }
         }
-        return neighbourCnt;
+        return neighbourCnt;*/
     }
 
     // endregion
-    public boolean isPassable(byte newPosX, byte newPosY) {
-        return Suche.getAccessCheck().isAccessible(this, newPosX, newPosY);
+    public boolean isPassable(IAccessibilityChecker accessibilityChecker,byte newPosX, byte newPosY) {
+        return accessibilityChecker.isAccessible(this, newPosX, newPosY);
     }
 
-    public List<Knoten> expand() {
+    public List<Knoten> expand(boolean noWait) {
         // Macht es einen Unterschied, wenn NEIGHBOUR_POS pro expand aufruf neu erzeugt wird? Ja
         List<Knoten> children = new LinkedList<>();
 
-        for (byte[] neighbour : NEIGHBOUR_POS) {
+        for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
             if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
                 children.add(new Knoten(this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        children.add(new Knoten(this, posX, posY));
+        if(!noWait) children.add(new Knoten(this, posX, posY));
 
         return children;
     }
@@ -165,9 +162,10 @@ public class Knoten {
         if (o == null || getClass() != o.getClass())
             return false;
         Knoten knoten = (Knoten) o;
-        return remainingDots == knoten.remainingDots && posX == knoten.posX && posY == knoten.posY && Arrays.deepEquals(view,
-                knoten.view);
-
+        // TODO (?) gehoert der powerpillTimer mit in equals?
+        return remainingDots == knoten.remainingDots && posX == knoten.posX && posY == knoten.posY
+                && heuristicalValue() == knoten.heuristicalValue()
+                && Arrays.deepEquals(view, knoten.view);
     }
 
     @Override

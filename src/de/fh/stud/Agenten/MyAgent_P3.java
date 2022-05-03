@@ -1,4 +1,4 @@
-package de.fh.stud;
+package de.fh.stud.Agenten;
 
 import de.fh.kiServer.agents.Agent;
 import de.fh.pacman.PacmanAgent_2021;
@@ -7,8 +7,11 @@ import de.fh.pacman.PacmanPercept;
 import de.fh.pacman.PacmanStartInfo;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
+import de.fh.stud.GameStateObserver;
+import de.fh.stud.Knoten;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
+import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
 import de.fh.stud.Suchen.Suchszenario;
 
 import java.util.List;
@@ -33,20 +36,26 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
      */
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
+        GameStateObserver.updateGameStateBeforeAction(percept, actionEffect);
         //Wenn noch keine Lösung gefunden wurde, dann starte die Suche
         if (loesungsKnoten == null) {
-            int goalx = 12;
+            int goalx = 13;
             int goaly = 1;
 
-            Suche suche = new Suche(Suchszenario.eatAllDots(true));
+            Suche suche = new Suche(Suchszenario.findDestination(true, Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD
+                    , goalx, goaly));
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                     Suche.SearchStrategy.A_STAR);
-            if (loesungsKnoten != null)
+            if (loesungsKnoten != null) {
+                loesungsKnoten.identifyActionSequence().forEach(System.out::println);
+
                 actionSequence = loesungsKnoten.identifyActionSequence();
+            }
         }
 
         //Wenn die Suche eine Lösung gefunden hat, dann ermittle die als nächstes auszuführende Aktion
         if (actionSequence != null && actionSequence.size() != 0) {
+            GameStateObserver.updateGameStateAfterAction(actionSequence.get(0));
             return actionSequence.remove(0);
         } else {
             //Ansonsten wurde keine Lösung gefunden und der Pacman kann das Spiel aufgeben
@@ -58,6 +67,7 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
     @Override
     protected void onGameStart(PacmanStartInfo startInfo) {
         Sackgassen.initDeadEndDepth(startInfo.getPercept().getView());
+        Sackgassen.printOneWayDepthMap(startInfo.getPercept().getView());
     }
 
     @Override

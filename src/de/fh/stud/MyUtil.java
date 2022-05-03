@@ -1,11 +1,16 @@
 package de.fh.stud;
 
+import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
+import de.fh.stud.Suchen.Suche;
+import de.fh.stud.interfaces.IAccessibilityChecker;
 
 import java.util.Arrays;
 
 public class MyUtil {
+
+    public static final byte[][] NEIGHBOUR_POS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
 
     public static byte[][] copyView(byte[][] orig) {
         byte[][] ret = new byte[orig.length][];
@@ -44,14 +49,37 @@ public class MyUtil {
         return ret;
     }
 
-    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX, int posY) {
+    public static int adjacentFreeFieldsCnt(IAccessibilityChecker accessFilter, PacmanTileType[][] view, int posX,
+                                            int posY) {
         int neighbourCnt = 0;
-        for (byte[] neighbour : Knoten.NEIGHBOUR_POS) {
-            if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
+        for (byte[] neighbour : NEIGHBOUR_POS) {
+            // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
+            if (accessFilter.isAccessible(Knoten.generateRoot(view, posX, posY), (byte) (posX + neighbour[0]),
+                    (byte) (posY + neighbour[1]))) {
                 neighbourCnt++;
             }
         }
         return neighbourCnt;
+    }
+
+    public static int adjacentFreeFieldsCnt(IAccessibilityChecker accessChecker, Knoten node, int posX, int posY) {
+        int neighbourCnt = 0;
+        for (byte[] neighbour : NEIGHBOUR_POS) {
+            // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
+            if (accessChecker.isAccessible(node, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
+                neighbourCnt++;
+            }
+        }
+        return neighbourCnt;
+    }
+
+    public static boolean isNeighbour(Vector2 pos1, Vector2 pos2) {
+        for (byte[] neighbour : NEIGHBOUR_POS) {
+            if(pos1.x+neighbour[0] == pos2.x && pos1.y+neighbour[1] == pos2.y){
+                return true;
+            }
+        }
+        return false;
     }
 
     public static PacmanAction oppositeAction(PacmanAction action) {
@@ -102,5 +130,23 @@ public class MyUtil {
 
     public static boolean isPowerpillType(PacmanTileType type) {
         return type == PacmanTileType.POWERPILL || type == PacmanTileType.GHOST_AND_POWERPILL;
+    }
+
+    public static boolean ghostNextToPos(byte[][] view, int newPosX, int newPosY) {
+        for (byte[] neighbour : NEIGHBOUR_POS) {
+            if (isGhostType(byteToTile(view[newPosX + neighbour[0]][newPosY + neighbour[1]]))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean ghostNextToPos(PacmanTileType[][] view, int newPosX, int newPosY) {
+        for (byte[] neighbour : NEIGHBOUR_POS) {
+            if (isGhostType(view[newPosX + neighbour[0]][newPosY + neighbour[1]])) {
+                return true;
+            }
+        }
+        return false;
     }
 }

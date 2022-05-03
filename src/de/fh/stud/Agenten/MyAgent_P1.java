@@ -1,4 +1,4 @@
-package de.fh.stud;
+package de.fh.stud.Agenten;
 
 import de.fh.kiServer.agents.Agent;
 import de.fh.kiServer.util.Util;
