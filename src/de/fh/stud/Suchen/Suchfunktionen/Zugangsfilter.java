@@ -56,6 +56,7 @@ public class Zugangsfilter {
             if (MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL)
                 return true;
 
+            // TODO IDEE: In einen geist kann man nur ein mal pro Powerpille expandieren
             if (node.getPowerpillTimer() == 0) {
                 for (GhostInfo ghost : GameStateObserver.newPercept.getGhostInfos()) {
                     if (ghost.getPillTimer() == 0 && MyUtil.isNeighbour(ghost.getPos(),
@@ -63,6 +64,7 @@ public class Zugangsfilter {
                         return false;
                     }
                 }
+                // TODO: Sackgassenerkennung (Problem: Suche in Suche nicht moeglich wegen stativc attribute)
 /*                if (Sackgassen.deadEndDepth[newPosX][newPosY] > 0)
                     for (GhostInfo ghosts : GameStateObserver.newPercept.getGhostInfos()) {
                         if (ghosts.getPillTimer() == 0 && Heuristikfunktionen.realDistance(newPosX, newPosY,
