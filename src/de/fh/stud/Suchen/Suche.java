@@ -162,6 +162,10 @@ public class Suche {
         return ACCESS_CHECK;
     }
 
+    public static void setAccessCheck(IAccessibilityChecker accessibilityChecker) {
+        ACCESS_CHECK = accessibilityChecker;
+    }
+
     public static IGoalPredicate getGoalPred() {
         return GOAL_PRED;
     }

@@ -98,8 +98,8 @@ public class Knoten {
     }
 
     // endregion
-    public boolean isPassable(IAccessibilityChecker accessibilityChecker,byte newPosX, byte newPosY) {
-        return accessibilityChecker.isAccessible(this, newPosX, newPosY);
+    public boolean isPassable(byte newPosX, byte newPosY) {
+        return Suche.getAccessCheck().isAccessible(this, newPosX, newPosY);
     }
 
     public List<Knoten> expand(boolean noWait) {

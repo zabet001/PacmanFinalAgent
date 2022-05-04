@@ -31,8 +31,8 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
     }
 
     /**
-     @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
-     @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
+     * @param percept      - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
+     * @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
      */
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
@@ -42,8 +42,7 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             int goalx = 13;
             int goaly = 1;
 
-            Suche suche = new Suche(Suchszenario.findDestination(true, Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD
-                    , goalx, goaly));
+            Suche suche = new Suche(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                     Suche.SearchStrategy.A_STAR);
             if (loesungsKnoten != null) {

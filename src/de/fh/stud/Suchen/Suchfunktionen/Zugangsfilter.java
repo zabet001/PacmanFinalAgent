@@ -63,12 +63,12 @@ public class Zugangsfilter {
                         return false;
                     }
                 }
-                if (Sackgassen.deadEndDepth[newPosX][newPosY] > 0)
+/*                if (Sackgassen.deadEndDepth[newPosX][newPosY] > 0)
                     for (GhostInfo ghosts : GameStateObserver.newPercept.getGhostInfos()) {
                         if (ghosts.getPillTimer() == 0 && Heuristikfunktionen.realDistance(newPosX, newPosY,
                                 ghosts.getPos().x, ghosts.getPos().y) <= 2 * Sackgassen.deadEndDepth[newPosX][newPosY])
                             return false;
-                    }
+                    }*/
             }
 
             return true;

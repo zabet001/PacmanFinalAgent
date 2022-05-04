@@ -49,12 +49,12 @@ public class MyUtil {
         return ret;
     }
 
-    public static int adjacentFreeFieldsCnt(IAccessibilityChecker accessFilter, PacmanTileType[][] view, int posX,
+    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX,
                                             int posY) {
         int neighbourCnt = 0;
         for (byte[] neighbour : NEIGHBOUR_POS) {
             // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
-            if (accessFilter.isAccessible(Knoten.generateRoot(view, posX, posY), (byte) (posX + neighbour[0]),
+            if (Suche.getAccessCheck().isAccessible(Knoten.generateRoot(view, posX, posY), (byte) (posX + neighbour[0]),
                     (byte) (posY + neighbour[1]))) {
                 neighbourCnt++;
             }
@@ -62,11 +62,11 @@ public class MyUtil {
         return neighbourCnt;
     }
 
-    public static int adjacentFreeFieldsCnt(IAccessibilityChecker accessChecker, Knoten node, int posX, int posY) {
+    public static int adjacentFreeFieldsCnt(Knoten node, int posX, int posY) {
         int neighbourCnt = 0;
         for (byte[] neighbour : NEIGHBOUR_POS) {
             // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
-            if (accessChecker.isAccessible(node, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
+            if (Suche.getAccessCheck().isAccessible(node, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
                 neighbourCnt++;
             }
         }

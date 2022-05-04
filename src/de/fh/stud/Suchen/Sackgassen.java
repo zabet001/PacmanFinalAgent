@@ -70,9 +70,10 @@ public class Sackgassen {
      */
     private static List<AbstractMap.SimpleEntry<Vector2, Vector2>> oneWayEndsFirstOrder(PacmanTileType[][] world) {
         List<AbstractMap.SimpleEntry<Vector2, Vector2>> ret = new LinkedList<>();
+        Suche.setAccessCheck(Zugangsfilter.noWall());
         for (int i = 0; i < world.length; i++) {
             for (int j = 0; j < world[0].length; j++) {
-                if (world[i][j] != PacmanTileType.WALL && MyUtil.adjacentFreeFieldsCnt(Zugangsfilter.noWall(), world,
+                if (world[i][j] != PacmanTileType.WALL && MyUtil.adjacentFreeFieldsCnt(world,
                         i, j) < 2) {
                     ret.add(new AbstractMap.SimpleEntry<>(new Vector2(i, j), null));
                 }
