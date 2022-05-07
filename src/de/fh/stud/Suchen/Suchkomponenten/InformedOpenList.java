@@ -6,12 +6,12 @@ import de.fh.stud.Suchen.Suche;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-public class InformedOpenList extends OpenList{
+public class InformedOpenList extends OpenList {
     private final PriorityQueue<Knoten> openList;
 
     public InformedOpenList(Suche.SearchStrategy searchStrategy) {
         super(searchStrategy);
-        openList=new PriorityQueue<>(getInsertionCriteria(searchStrategy));
+        openList = new PriorityQueue<>(getInsertionCriteria(searchStrategy));
     }
 
     @Override
@@ -36,9 +36,9 @@ public class InformedOpenList extends OpenList{
 
     private static Comparator<Knoten> getInsertionCriteria(Suche.SearchStrategy strategy) {
         return switch (strategy) {
-            case GREEDY -> Comparator.comparingInt(Knoten::heuristicalValue);
+            case GREEDY -> Comparator.comparingDouble(Knoten::heuristicalValue);
             case UCS -> Comparator.comparingInt(Knoten::getCost);
-            case A_STAR -> Comparator.comparingInt(a -> a.getCost() + a.heuristicalValue());
+            case A_STAR -> Comparator.comparingDouble(a -> a.getCost() + a.heuristicalValue());
             default -> null;
         };
     }

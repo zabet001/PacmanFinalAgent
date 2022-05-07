@@ -1,12 +1,13 @@
 package de.fh.stud;
 
 import de.fh.kiServer.util.Vector2;
+import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.Suchen.Suche;
-import de.fh.stud.interfaces.IAccessibilityChecker;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class MyUtil {
 
@@ -49,13 +50,10 @@ public class MyUtil {
         return ret;
     }
 
-    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX,
-                                            int posY) {
+    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX, int posY) {
         int neighbourCnt = 0;
-        for (byte[] neighbour : NEIGHBOUR_POS) {
-            // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
-            if (Suche.getAccessCheck().isAccessible(Knoten.generateRoot(view, posX, posY), (byte) (posX + neighbour[0]),
-                    (byte) (posY + neighbour[1]))) {
+        for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
+            if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
                 neighbourCnt++;
             }
         }
@@ -75,7 +73,7 @@ public class MyUtil {
 
     public static boolean isNeighbour(Vector2 pos1, Vector2 pos2) {
         for (byte[] neighbour : NEIGHBOUR_POS) {
-            if(pos1.x+neighbour[0] == pos2.x && pos1.y+neighbour[1] == pos2.y){
+            if (pos1.x + neighbour[0] == pos2.x && pos1.y + neighbour[1] == pos2.y) {
                 return true;
             }
         }
@@ -111,17 +109,20 @@ public class MyUtil {
     }
 
     public static <T> T[] mergeArrays(T[] a, T[] b) {
-        if (a == null)
+        if (a == null) {
             return b;
-        if (b == null)
+        }
+        if (b == null) {
             return a;
+        }
         T[] ret = Arrays.copyOf(a, a.length + b.length);
         System.arraycopy(b, 0, ret, a.length, b.length);
         return ret;
     }
 
     public static boolean isGhostType(PacmanTileType type) {
-        return type == PacmanTileType.GHOST || type == PacmanTileType.GHOST_AND_DOT || type == PacmanTileType.GHOST_AND_POWERPILL;
+        return type == PacmanTileType.GHOST || type == PacmanTileType.GHOST_AND_DOT
+                || type == PacmanTileType.GHOST_AND_POWERPILL;
     }
 
     public static boolean isDotType(PacmanTileType type) {
@@ -141,6 +142,16 @@ public class MyUtil {
         return false;
     }
 
+    public static boolean ghostNextToPos(int newPosX, int newPosY, List<GhostInfo> ghostInfos) {
+        Vector2 pos = new Vector2(newPosX, newPosY);
+        for (GhostInfo ghost : ghostInfos) {
+            if (isNeighbour(pos, ghost.getPos())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static boolean ghostNextToPos(PacmanTileType[][] view, int newPosX, int newPosY) {
         for (byte[] neighbour : NEIGHBOUR_POS) {
             if (isGhostType(view[newPosX + neighbour[0]][newPosY + neighbour[1]])) {
@@ -148,5 +159,17 @@ public class MyUtil {
             }
         }
         return false;
+    }
+
+    public static short countDots(PacmanTileType[][] view) {
+        short cnt = 0;
+        for (PacmanTileType[] rowVals : view) {
+            for (int col = 0; col < view[0].length; col++) {
+                if (isDotType(rowVals[col])) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
     }
 }

@@ -8,8 +8,8 @@ import de.fh.stud.interfaces.ICallbackFunction;
 import java.util.List;
 
 public class CallbackFunktionen {
-    public static ICallbackFunction saveStepCost(byte[][] costMap) {
-        return expCand -> costMap[expCand.getPosX()][expCand.getPosY()] = (byte) (expCand.getCost() + 1);
+    public static ICallbackFunction saveStepCost(short[][] costMap) {
+        return expCand -> costMap[expCand.getPosX()][expCand.getPosY()] = expCand.getCost();
     }
 
     public static ICallbackFunction saveVisitedPos(boolean[][] visitedMap) {
@@ -22,8 +22,9 @@ public class CallbackFunktionen {
 
     public static ICallbackFunction saveVisitedPos(List<Vector2> visitedList, boolean duplicates) {
         return expCand -> {
-            if (duplicates || !visitedList.contains(expCand.getPosition()))
+            if (duplicates || !visitedList.contains(expCand.getPosition())) {
                 visitedList.add(expCand.getPosition());
+            }
         };
     }
 
@@ -31,7 +32,7 @@ public class CallbackFunktionen {
                                                 boolean duplicates) {
         return expCand -> {
             if (duplicates || !visitedList.contains(expCand.getPosition())) {
-                saveVisitedPos(visitedList,true).callback(expCand); // duplicates kann hier ignoriert werden
+                saveVisitedPos(visitedList, true).callback(expCand); // duplicates kann hier ignoriert werden
                 saveVisitedType(visitedTypesList).callback(expCand);
             }
         };

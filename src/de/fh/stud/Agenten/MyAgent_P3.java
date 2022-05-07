@@ -7,8 +7,10 @@ import de.fh.pacman.PacmanPercept;
 import de.fh.pacman.PacmanStartInfo;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
+import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.Knoten;
+import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
@@ -31,8 +33,8 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
     }
 
     /**
-     * @param percept      - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
-     * @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
+     @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
+     @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
      */
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
@@ -42,12 +44,10 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             int goalx = 13;
             int goaly = 1;
 
-            Suche suche = new Suche(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
+            Suche suche = new Suche(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD));
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                    Suche.SearchStrategy.A_STAR);
+                                         Suche.SearchStrategy.A_STAR);
             if (loesungsKnoten != null) {
-                loesungsKnoten.identifyActionSequence().forEach(System.out::println);
-
                 actionSequence = loesungsKnoten.identifyActionSequence();
             }
         }
@@ -56,7 +56,8 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
         if (actionSequence != null && actionSequence.size() != 0) {
             GameStateObserver.updateGameStateAfterAction(actionSequence.get(0));
             return actionSequence.remove(0);
-        } else {
+        }
+        else {
             //Ansonsten wurde keine Lösung gefunden und der Pacman kann das Spiel aufgeben
             return PacmanAction.QUIT_GAME;
         }
@@ -65,8 +66,12 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
 
     @Override
     protected void onGameStart(PacmanStartInfo startInfo) {
-        Sackgassen.initDeadEndDepth(startInfo.getPercept().getView());
-        Sackgassen.printOneWayDepthMap(startInfo.getPercept().getView());
+        PacmanTileType[][] world = startInfo.getPercept().getView();
+        Sackgassen.initDeadEndDepth(world);
+        Felddistanzen.initDistances(world);
+
+        Sackgassen.printOneWayDepthMap(world);
+        Felddistanzen.printAllDistances(world);
     }
 
     @Override

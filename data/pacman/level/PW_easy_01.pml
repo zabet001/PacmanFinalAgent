@@ -15,4 +15,4 @@ W D W W W W W W W W W W W D W
 W D W W W W W W W W W W W D W 
 W D D D D D D D D D D D D D W 
 W W W W W W W W W W W W W W W 
-sp:5,5,,direction:EAST
+sp:5,5,,

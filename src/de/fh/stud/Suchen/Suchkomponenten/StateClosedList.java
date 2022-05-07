@@ -4,11 +4,11 @@ import de.fh.stud.Knoten;
 
 import java.util.HashSet;
 
-public class StateClosedList extends ClosedList{
+public class StateClosedList extends ClosedList {
     private HashSet<Knoten> closedList;
 
-    public StateClosedList(){
-         closedList = new HashSet<>();
+    public StateClosedList() {
+        closedList = new HashSet<>();
     }
 
     @Override

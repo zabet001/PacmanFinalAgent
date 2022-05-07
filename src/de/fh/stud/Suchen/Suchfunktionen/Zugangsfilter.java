@@ -1,14 +1,12 @@
 package de.fh.stud.Suchen.Suchfunktionen;
 
 import de.fh.kiServer.util.Vector2;
-import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
+import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.interfaces.IAccessibilityChecker;
-
-import java.util.List;
 
 public class Zugangsfilter {
 
@@ -19,8 +17,9 @@ public class Zugangsfilter {
     public static IAccessibilityChecker merge(IAccessibilityChecker... accessibilityCheckers) {
         return (node, newPosX, newPosY) -> {
             for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
-                if (!accessibilityChecker.isAccessible(node, newPosX, newPosY))
+                if (!accessibilityChecker.isAccessible(node, newPosX, newPosY)) {
                     return false;
+                }
             }
             return true;
         };
@@ -38,8 +37,6 @@ public class Zugangsfilter {
         return (node, newPosX, newPosY) -> {
             PacmanTileType field = MyUtil.byteToTile(node.getView()[newPosX][newPosY]);
             if (node.getPowerpillTimer() > 0) {
-                // TODO: Auch bei aktivem PillTimer kann ein gefressener Geist gefaehrlich sein
-                //  -> ueberpruefen, ob auf dem Feld ein Geist mit abgelaufenem powerpillTimer ist
                 return field != PacmanTileType.WALL;
             }
             return field == PacmanTileType.EMPTY || field == PacmanTileType.DOT || field == PacmanTileType.POWERPILL;
@@ -48,31 +45,27 @@ public class Zugangsfilter {
 
     public static IAccessibilityChecker nonDangerousEnvironment() {
         return (node, newPosX, newPosY) -> {
-            if (!nonDangerousField().isAccessible(node, newPosX, newPosY))
+            if (!nonDangerousField().isAccessible(node, newPosX, newPosY)) {
                 return false;
-            if (node.getRemainingDots() == 1 && MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.DOT) {
+            }
+            if (node.getRemainingDots() == 1
+                    && MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.DOT) {
                 return true;
             }
-            if (MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL)
+            if (MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL) {
                 return true;
-
-            // TODO IDEE: In einen geist kann man nur ein mal pro Powerpille expandieren
+            }
             if (node.getPowerpillTimer() == 0) {
-                for (GhostInfo ghost : GameStateObserver.newPercept.getGhostInfos()) {
-                    if (ghost.getPillTimer() == 0 && MyUtil.isNeighbour(ghost.getPos(),
-                            new Vector2(newPosX, newPosY))) {
-                        return false;
-                    }
+                // TODO: Pacman stirbt, wenn der Ghost wieder respawnt und trotz aktiver Pille den Pacman schlaegt
+                //  -> Man muesste den Spawnpoint des Ghosts finden, und der Ghost von dort aus ist dann gefaehrlich (was zu viel Arbeit abverlangt)
+                if (MyUtil.ghostNextToPos(newPosX, newPosY, GameStateObserver.getGameState().getNewPercept().getGhostInfos())) {
+                    return false;
                 }
-                // TODO: Sackgassenerkennung (Problem: Suche in Suche nicht moeglich wegen stativc attribute)
-/*                if (Sackgassen.deadEndDepth[newPosX][newPosY] > 0)
-                    for (GhostInfo ghosts : GameStateObserver.newPercept.getGhostInfos()) {
-                        if (ghosts.getPillTimer() == 0 && Heuristikfunktionen.realDistance(newPosX, newPosY,
-                                ghosts.getPos().x, ghosts.getPos().y) <= 2 * Sackgassen.deadEndDepth[newPosX][newPosY])
-                            return false;
-                    }*/
+                return node.getRemainingDots() == 1 || Sackgassen.deadEndDepth[newPosX][newPosY] <= 0 ||
+                        Felddistanzen.Geisterdistanz.minimumGhostDistance(node.getPosX(), node.getPosY(),
+                                                                          GameStateObserver.getGameState().getNewPercept().getGhostInfos())
+                                > 2 * Sackgassen.deadEndDepth[newPosX][newPosY];
             }
-
             return true;
         };
     }
@@ -84,8 +77,9 @@ public class Zugangsfilter {
     public static IAccessibilityChecker excludePositions(Vector2... positions) {
         return (node, newPosX, newPosY) -> {
             for (Vector2 pos : positions) {
-                if (pos.x == newPosX && pos.y == newPosY)
+                if (pos.x == newPosX && pos.y == newPosY) {
                     return false;
+                }
             }
             return true;
         };
