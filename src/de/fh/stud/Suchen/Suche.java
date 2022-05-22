@@ -26,34 +26,12 @@ public class Suche {
     // TODO: Heuristiken, Kosten, Goal etc. in Suche teilen
     //  (z.B. Objekt Knoteninformationen -> Knoten (unidirektionale Assoziation)
 
-    private static SearchArgs currentSearchArgs;
-
     private boolean noWaitAction;
-
-    private static class SearchArgs {
-
-        // TODO: Das ganze geht kaputt, wenn eine zweite Suche waehrend der ersten Suche stattfindet und nicht
-        //  zwischengespeichert wird !!!
-        private boolean stateSearch;
-        private IAccessibilityChecker accessCheck;
-        private IGoalPredicate goalPred;
-        private IHeuristicFunction heuristicFunc;
-        private ICallbackFunction[] callbackFuncs;
-
-        private SearchArgs(boolean stateSearch, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
-                           IHeuristicFunction heuristicFunc, ICallbackFunction[] callbackFuncs) {
-            this.stateSearch = stateSearch;
-            this.accessCheck = accessCheck;
-            this.goalPred = goalPred;
-            this.heuristicFunc = heuristicFunc;
-            this.callbackFuncs = callbackFuncs;
-        }
-
-        private SearchArgs(SearchArgs origArgs) {
-            this(origArgs.stateSearch, origArgs.accessCheck, origArgs.goalPred, origArgs.heuristicFunc,
-                 origArgs.callbackFuncs);
-        }
-    }
+    private final boolean stateSearch;
+    private final IAccessibilityChecker accessCheck;
+    private final IGoalPredicate goalPred;
+    private final IHeuristicFunction heuristicFunc;
+    private final ICallbackFunction[] callbackFuncs;
 
     public enum SearchStrategy {
         DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
@@ -80,11 +58,11 @@ public class Suche {
         }
 
         this.noWaitAction = noWaitAction;
-        Suche.currentSearchArgs = new SearchArgs(isStateSearch, accessCheck,
-                                                 goalPred != null ? goalPred : node -> false,
-                                                 heuristicFunc != null ? heuristicFunc : node -> 0, callbackFunctions
-                                                         != null ? callbackFunctions :
-                                                         new ICallbackFunction[]{expCand -> {}});
+        this.stateSearch = isStateSearch;
+        this.accessCheck = accessCheck;
+        this.goalPred = goalPred != null ? goalPred : node -> false;
+        this.heuristicFunc = heuristicFunc != null ? heuristicFunc : node -> 0;
+        this.callbackFuncs = callbackFunctions;
     }
 
     public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy) {
@@ -103,12 +81,12 @@ public class Suche {
 
     public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit,
                               boolean showResults) {
-        Knoten rootNode = Knoten.generateRoot(world, posX, posY);
+        Knoten rootNode = Knoten.generateRoot(stateSearch,world, posX, posY);
 
         long startTime = System.nanoTime();
         AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> searchResult = beginSearch(rootNode,
                                                                                               OpenList.buildOpenList(
-                                                                                                      strategy),
+                                                                                                      strategy,heuristicFunc),
                                                                                               ClosedList.buildClosedList(
                                                                                                       isStateSearch(),
                                                                                                       world),
@@ -139,7 +117,7 @@ public class Suche {
 
         while (!openList.isEmpty()) {
             expCand = openList.remove();
-            if (expCand.isGoalNode()) {
+            if (expCand.isGoalNode(goalPred)) {
                 goalNodes.add(expCand);
                 if (goalNodes.size() >= solutionLimit) {
                     break;
@@ -147,8 +125,8 @@ public class Suche {
             }
             if (!closedList.contains(expCand)) {
                 closedList.add(expCand);
-                expCand.executeCallbacks();
-                expCand.expand(noWaitAction).forEach(openList::add);
+                expCand.executeCallbacks(callbackFuncs);
+                expCand.expand(stateSearch,noWaitAction,accessCheck).forEach(openList::add);
             }
         }
 
@@ -192,36 +170,25 @@ public class Suche {
         JOptionPane.showMessageDialog(jf, report.toString());
     }
 
-    public static SearchArgs backupSearchArgs() {
-        return new SearchArgs(currentSearchArgs);
+
+    public boolean isStateSearch() {
+        return stateSearch;
     }
 
-    public static void saveSearchArgs(SearchArgs searchArgs) {
-        currentSearchArgs = searchArgs;
+    public IAccessibilityChecker getAccessCheck() {
+        return accessCheck;
     }
 
-    public static boolean isStateSearch() {
-        return currentSearchArgs.stateSearch;
+    public IGoalPredicate getGoalPred() {
+        return goalPred;
     }
 
-    public static IAccessibilityChecker getAccessCheck() {
-        return currentSearchArgs.accessCheck;
+    public IHeuristicFunction getHeuristicFunc() {
+        return heuristicFunc;
     }
 
-    public static void setAccessCheck(IAccessibilityChecker accessibilityChecker) {
-        currentSearchArgs.accessCheck = accessibilityChecker;
-    }
-
-    public static IGoalPredicate getGoalPred() {
-        return currentSearchArgs.goalPred;
-    }
-
-    public static IHeuristicFunction getHeuristicFunc() {
-        return currentSearchArgs.heuristicFunc;
-    }
-
-    public static ICallbackFunction[] getCallbackFuncs() {
-        return currentSearchArgs.callbackFuncs;
+    public ICallbackFunction[] getCallbackFuncs() {
+        return callbackFuncs;
     }
 
     public boolean isNoWaitAction() {

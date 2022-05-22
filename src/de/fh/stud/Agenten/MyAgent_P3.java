@@ -45,6 +45,7 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             int goaly = 1;
 
             Suche suche = new Suche(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD));
+            suche.setNoWaitAction(true);
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                          Suche.SearchStrategy.A_STAR);
             if (loesungsKnoten != null) {

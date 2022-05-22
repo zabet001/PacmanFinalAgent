@@ -4,7 +4,10 @@ import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.Suchen.Suche;
+import de.fh.stud.interfaces.IAccessibilityChecker;
 import de.fh.stud.interfaces.ICallbackFunction;
+import de.fh.stud.interfaces.IGoalPredicate;
+import de.fh.stud.interfaces.IHeuristicFunction;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -28,22 +31,22 @@ public class Knoten {
 
     // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichernrn?
     //  (vllt. z.B. Objekt Zusatzinformationen -> Knoten (unidirektionale Assoziation)
-    public static Knoten generateRoot(PacmanTileType[][] world, int posX, int posY) {
+    public static Knoten generateRoot(boolean isStateSearch, PacmanTileType[][] world, int posX, int posY) {
         Knoten.STATIC_WORLD = world;
         // Das Spawnfeld fuer die Suche ignorieren
         PacmanTileType zw = world[posX][posY];
         world[posX][posY] = PacmanTileType.EMPTY;
-        Knoten ret = new Knoten((byte) posX, (byte) posY);
+        Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
         // Spawnfeld wieder zuruecksetzen
         world[posX][posY] = zw;
         return ret;
     }
 
-    private Knoten(byte posX, byte posY) {
-        this(null, posX, posY);
+    private Knoten(boolean isStateSearch, byte posX, byte posY) {
+        this(isStateSearch, null, posX, posY);
     }
 
-    private Knoten(Knoten pred, byte posX, byte posY) {
+    private Knoten(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
         this.pred = pred;
         this.posX = posX;
         this.posY = posY;
@@ -54,75 +57,98 @@ public class Knoten {
 
             this.cost = 0;
             this.remainingDots = MyUtil.countDots(STATIC_WORLD);
-            this.powerpillTimer = Suche.isStateSearch() ? GameStateObserver.getGameState().getPowerpillTimer() : 0;
+            this.powerpillTimer = isStateSearch ? GameStateObserver.getGameState().getPowerpillTimer() : 0;
         }
         else {
             // Kindknoten
-            if (Suche.isStateSearch() && MyUtil.isPowerpillType(MyUtil.byteToTile(pred.view[posX][posY]))) {
-                powerpillTimer = GameStateObserver.getPowerpillDuration();
-            }
-            else {
-                powerpillTimer = (byte) (pred.powerpillTimer - (pred.powerpillTimer > 0 ? 1 : 0));
-            }
-            if (Suche.isStateSearch() && MyUtil.isDotType(MyUtil.byteToTile(pred.view[posX][posY]))) {
-                this.remainingDots = (short) (pred.remainingDots - 1);
-            }
-            else {
-                this.remainingDots = pred.remainingDots;
-            }
-
-            if (!Suche.isStateSearch() || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.EMPTY)) {
-                this.view = pred.view;
-            }
-            else {
-                this.view = MyUtil.copyView(pred.view);
-
-                if (MyUtil.isGhostType(MyUtil.byteToTile(this.view[posX][posY]))) {
-                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.GHOST);
-                    // IDEE: Wenn Geist gefressen: powerpillTimer auf 1 setzen, da Gefahr ab naechsten Respawn
-                    this.powerpillTimer = 1; // Wenn Gefahr durch respawnten Geist vermeiden
-                }
-                else {
-                    this.view[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
-                }
-            }
-
+            this.view = manageNewView(isStateSearch, pred, posX, posY);
             this.cost = (short) (pred.cost + 1);
+            this.remainingDots = calcRemainingDots(isStateSearch, pred, posX, posY);
+            this.powerpillTimer = calcPowerpillTimer(isStateSearch, pred, posX, posY);
         }
 
     }
 
-    public int nodeNeighbourCnt() {
-        return MyUtil.adjacentFreeFieldsCnt(this, posX, posY);
+    private short calcRemainingDots(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
+        if (isStateSearch && MyUtil.isDotType(MyUtil.byteToTile(pred.view[posX][posY]))) {
+            return (short) (pred.remainingDots - 1);
+        }
+        else {
+            return pred.remainingDots;
+        }
     }
 
-    public boolean isPassable(byte newPosX, byte newPosY) {
-        return Suche.getAccessCheck().isAccessible(this, newPosX, newPosY);
+    private byte calcPowerpillTimer(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
+
+        if (isStateSearch) {
+            if (MyUtil.isPowerpillType(MyUtil.byteToTile(pred.view[posX][posY]))) {
+                return GameStateObserver.getPowerpillDuration();
+            }
+            // IDEE: Wenn ein Geist gefressen wurde, ist dieser beim Respawnen gefaehrlich -> Nur noch 1 Schritt lang
+            // die Powerpille nutzen
+            else if (pred.powerpillTimer > 1 && MyUtil.isGhostType(MyUtil.byteToTile(pred.view[posX][posY]))) {
+                return 1;
+            }
+        }
+        return (byte) (pred.powerpillTimer - (pred.powerpillTimer > 0 ? 1 : 0));
+
     }
 
-    public List<Knoten> expand(boolean noWait) {
+    private byte[][] manageNewView(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
+        if (!isStateSearch || pred.view[posX][posY] == MyUtil.tileToByte(PacmanTileType.EMPTY)) {
+            return pred.view;
+        }
+        byte[][] newView = MyUtil.copyView(pred.view);
+        if (MyUtil.isGhostType(MyUtil.byteToTile(newView[posX][posY]))) {
+            newView[posX][posY] = MyUtil.tileToByte(PacmanTileType.GHOST);
+        }
+        else {
+            newView[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+        }
+
+        return newView;
+    }
+
+    public int nodeNeighbourCnt(IAccessibilityChecker accessibilityChecker) {
+        int neighbourCnt = 0;
+        for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
+            // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
+            if (accessibilityChecker.isAccessible(this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
+                neighbourCnt++;
+            }
+        }
+        return neighbourCnt;
+    }
+
+    public boolean isPassable(byte newPosX, byte newPosY, IAccessibilityChecker accessibilityChecker) {
+        return accessibilityChecker.isAccessible(this, newPosX, newPosY);
+    }
+
+    public List<Knoten> expand(boolean isStateSearch,boolean noWait,IAccessibilityChecker accessibilityChecker) {
         // Macht es einen Unterschied, wenn NEIGHBOUR_POS pro expand aufruf neu erzeugt wird? Ja
         List<Knoten> children = new LinkedList<>();
 
         for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
-            if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
-                children.add(new Knoten(this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
+            if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),accessibilityChecker)) {
+                children.add(new Knoten(isStateSearch,this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        if (!noWait && cost < COST_LIMIT && isPassable(posX, posY)) {
-            children.add(new Knoten(this, posX, posY));
+        if (!noWait && cost < COST_LIMIT && isPassable(posX, posY,accessibilityChecker)) {
+            children.add(new Knoten(isStateSearch,this, posX, posY));
         }
 
         return children;
     }
 
-    public boolean isGoalNode() {
-        return Suche.getGoalPred().isGoalNode(this);
+    public boolean isGoalNode(IGoalPredicate goalPredicate) {
+        return goalPredicate.isGoalNode(this);
     }
 
-    public void executeCallbacks() {
-        for (ICallbackFunction callbacks : Suche.getCallbackFuncs()) {
-            callbacks.callback(this);
+    public void executeCallbacks(ICallbackFunction[] callbackFunctions) {
+        if (callbackFunctions != null) {
+            for (ICallbackFunction callbacks : callbackFunctions) {
+                callbacks.callback(this);
+            }
         }
     }
 
@@ -162,8 +188,8 @@ public class Knoten {
         return ret;
     }
 
-    public float heuristicalValue() {
-        return Suche.getHeuristicFunc().calcHeuristic(this);
+    public float heuristicalValue(IHeuristicFunction heuristicFunction) {
+        return heuristicFunction.calcHeuristic(this);
     }
 
     @Override

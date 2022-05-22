@@ -47,14 +47,15 @@ public class Suchszenario {
     //endregion
     public static Suchszenario runAway(Zugangsfilter.AvoidMode avoidMode, boolean noWait, int startPosX,
                                        int startPosY) {
-        return runAway(true,avoidMode,noWait, startPosX, startPosY);
+        return runAway(true, avoidMode, noWait, startPosX, startPosY);
     }
 
     public static Suchszenario runAway(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode, boolean noWait,
                                        int startPosX, int startPosY) {
         return new Suchszenario(isStateProblem, Zugangsfilter.avoidThese(avoidMode), noWait,
                                 Zielfunktionen.notOnPosition(startPosX, startPosY),
-                                Heuristikfunktionen.distanceToCloserGhosts(GameStateObserver.getGameState().getNewPercept().getGhostInfos()));
+                                Heuristikfunktionen.distanceToCloserGhosts(
+                                        GameStateObserver.getGameState().getNewPercept().getGhostInfos()));
     }
 
     /**
@@ -91,11 +92,12 @@ public class Suchszenario {
                                 Zielfunktionen.dotEaten(isStateProblem), Heuristikfunktionen.isDeadEndField());
     }
 
-    public static Suchszenario eatUpToNDots(int amount,int startingCnt, Zugangsfilter.AvoidMode avoidMode) {
-        return new Suchszenario(true, Zugangsfilter.avoidThese(avoidMode), true, Zielfunktionen.amountOfDotsEaten(amount,startingCnt),
-                                Heuristikfunktionen.combine(Heuristikfunktionen.remainingDots(),Heuristikfunktionen.isDeadEndField()));
+    public static Suchszenario eatUpToNDots(int amount, int startingCnt, Zugangsfilter.AvoidMode avoidMode) {
+        return new Suchszenario(true, Zugangsfilter.avoidThese(avoidMode), true,
+                                Zielfunktionen.amountOfDotsEaten(amount, startingCnt),
+                                Heuristikfunktionen.combine(Heuristikfunktionen.remainingDots(),
+                                                            Heuristikfunktionen.isDeadEndField()));
     }
-
 
     /**
      @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
@@ -134,9 +136,9 @@ public class Suchszenario {
     }
 
     public static Suchszenario locateDeadEndExit(byte[][] markedAsOneWays) {
-        return new Suchszenario(false, Zugangsfilter.merge(Zugangsfilter.noWall(),
-                                                           (node, newPosX, newPosY) -> markedAsOneWays[newPosX][newPosY]
-                                                                   == 0), true, Zielfunktionen.minimumNeighbours(2),
+        IAccessibilityChecker noWallOrDeadEnd = Zugangsfilter.merge(Zugangsfilter.noWall(), (node, newPosX, newPosY) ->
+                markedAsOneWays[newPosX][newPosY] == 0);
+        return new Suchszenario(false, noWallOrDeadEnd, true, Zielfunktionen.minimumNeighbours(2, noWallOrDeadEnd),
                                 null);
     }
 

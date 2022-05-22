@@ -75,7 +75,7 @@ public class Sackgassen {
         List<AbstractMap.SimpleEntry<Vector2, Vector2>> ret = new LinkedList<>();
         for (int i = 0; i < world.length; i++) {
             for (int j = 0; j < world[0].length; j++) {
-                if (world[i][j] != PacmanTileType.WALL && MyUtil.adjacentFreeFieldsCnt(world, i, j) < 2) {
+                if (world[i][j] != PacmanTileType.WALL && MyUtil.neighbourFieldsCnt(world, i, j) < 2) {
                     ret.add(new AbstractMap.SimpleEntry<>(new Vector2(i, j), null));
                 }
             }
@@ -98,6 +98,8 @@ public class Sackgassen {
         if (oneWayStart == null) {
             return null;
         }
+
+
         return new AbstractMap.SimpleEntry<>(oneWayStart.getPosition(), oneWayStart.getPred().getPosition());
     }
 

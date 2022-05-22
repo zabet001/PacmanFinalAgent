@@ -50,7 +50,7 @@ public class MyUtil {
         return ret;
     }
 
-    public static int adjacentFreeFieldsCnt(PacmanTileType[][] view, int posX, int posY) {
+    public static int neighbourFieldsCnt(PacmanTileType[][] view, int posX, int posY) {
         int neighbourCnt = 0;
         for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
             if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
@@ -60,16 +60,6 @@ public class MyUtil {
         return neighbourCnt;
     }
 
-    public static int adjacentFreeFieldsCnt(Knoten node, int posX, int posY) {
-        int neighbourCnt = 0;
-        for (byte[] neighbour : NEIGHBOUR_POS) {
-            // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
-            if (Suche.getAccessCheck().isAccessible(node, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
-                neighbourCnt++;
-            }
-        }
-        return neighbourCnt;
-    }
 
     public static boolean isNeighbour(Vector2 pos1, Vector2 pos2) {
         for (byte[] neighbour : NEIGHBOUR_POS) {

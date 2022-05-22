@@ -14,14 +14,14 @@ import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
 import de.fh.stud.Suchen.Suchszenario;
 
-public class MyAgent_PFinal extends PacmanAgent_2021 {
+public class MyAgent_P_Final extends PacmanAgent_2021 {
 
-    public MyAgent_PFinal(String name) {
+    public MyAgent_P_Final(String name) {
         super(name);
     }
 
     public static void main(String[] args) {
-        MyAgent_PFinal agent = new MyAgent_PFinal("MyFinalAgent");
+        MyAgent_P_Final agent = new MyAgent_P_Final("MyFinalAgent");
         Agent.start(agent, "127.0.0.1", 5000);
 
     }
@@ -45,13 +45,15 @@ public class MyAgent_PFinal extends PacmanAgent_2021 {
         Knoten loesungsKnoten = null;
         final int EATING_GOAL = 5;
 
-        /*// Strategie 1: Suche nach bis zu N essbaren Dots
+        /*
+        // Strategie 1: Suche nach bis zu N essbaren Dots
         // Warum auch immer ist damit die Winrate schlechter
         suche = new Suche(Suchszenario.eatUpToNDots(EATING_GOAL, GameStateObserver.remainingDots,
                                                     Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
         loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                      Suche.SearchStrategy.A_STAR, false);
-*/
+        */
+
         // Strategie 2: Suche nach essbaren Dots
         if (loesungsKnoten == null) {
             suche = new Suche(Suchszenario.eatNearestDot(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
@@ -125,8 +127,8 @@ public class MyAgent_PFinal extends PacmanAgent_2021 {
         Sackgassen.initDeadEndDepth(world);
         Felddistanzen.initDistances(world);
 
-/*        Sackgassen.printOneWayDepthMap(world);
-        Felddistanzen.printAllDistances(world);*/
+        Sackgassen.printOneWayDepthMap(world);
+        Felddistanzen.printAllDistances(world);
     }
 
     @Override

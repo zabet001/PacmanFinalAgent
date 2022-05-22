@@ -16,7 +16,7 @@ public class Zugangsfilter {
 
     public static IAccessibilityChecker merge(IAccessibilityChecker... accessibilityCheckers) {
         return (node, newPosX, newPosY) -> {
-            for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
+                for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
                 if (!accessibilityChecker.isAccessible(node, newPosX, newPosY)) {
                     return false;
                 }

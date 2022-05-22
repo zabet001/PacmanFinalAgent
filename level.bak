@@ -1,20 +1,19 @@
-V3.0 15 15
-PW_g_easy_HR.pml
-W W W W W W W W W W W W W W W 
-W PP D D D D D D D D E D D PP W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W D D D D E D D D D D D D D W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W D D D D D D D D D D D D D W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W D W W D W W D W W D W W D W 
-W PP D D E D D D D D D D D PP W 
-W W W W W W W W W W W W W W W 
-sp:5,5,,
-sp:4,13,GHOST_HUNTER,
-sp:10,1,GHOST_RANDOM,
+V3.0 13 13
+PW_g_moderate_02_HEE.pml
+W W W W W W W W W W W W W 
+W D D D D D D D D D D D W 
+W D D W D D E D D W PP D W 
+W D W W D D D D D W W D W 
+W D D D PP D D D D D D D W 
+W D D D D D D D D D D D W 
+W D E D D D D D D D E D W 
+W D D D D D D D D D D D W 
+W D D D D D D D PP D D D W 
+W D W W D D D D D W W D W 
+W D PP W D D E D D W D D W 
+W D D D D D D D D D D D W 
+W W W W W W W W W W W W W 
+sp:6,2,GHOST_HUNTER,
+sp:2,6,GHOST_EAGER,direction:EAST
+sp:10,6,GHOST_EAGER,direction:EAST
+sp:6,10,,direction:EAST

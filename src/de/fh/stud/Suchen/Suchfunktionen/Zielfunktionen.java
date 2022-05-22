@@ -1,6 +1,7 @@
 package de.fh.stud.Suchen.Suchfunktionen;
 
 import de.fh.stud.MyUtil;
+import de.fh.stud.interfaces.IAccessibilityChecker;
 import de.fh.stud.interfaces.IGoalPredicate;
 
 public class Zielfunktionen {
@@ -51,8 +52,8 @@ public class Zielfunktionen {
         return node -> node.getPosX() != startPosX || node.getPosY() != startPosY;
     }
 
-    public static IGoalPredicate minimumNeighbours(int numberOfNeighbours) {
-        return node -> node.nodeNeighbourCnt() >= numberOfNeighbours;
+    public static IGoalPredicate minimumNeighbours(int numberOfNeighbours, IAccessibilityChecker accessibilityChecker) {
+        return node -> node.nodeNeighbourCnt(accessibilityChecker) >= numberOfNeighbours;
     }
 
 }
