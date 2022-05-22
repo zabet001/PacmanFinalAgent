@@ -61,8 +61,8 @@ public class Knoten {
         }
         else {
             // Kindknoten
-            this.view = manageNewView(isStateSearch, pred, posX, posY);
             this.cost = (short) (pred.cost + 1);
+            this.view = manageNewView(isStateSearch, pred, posX, posY);
             this.remainingDots = calcRemainingDots(isStateSearch, pred, posX, posY);
             this.powerpillTimer = calcPowerpillTimer(isStateSearch, pred, posX, posY);
         }

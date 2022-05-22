@@ -126,9 +126,9 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 
         Sackgassen.initDeadEndDepth(world);
         Felddistanzen.initDistances(world);
-
+/*
         Sackgassen.printOneWayDepthMap(world);
-        Felddistanzen.printAllDistances(world);
+        Felddistanzen.printAllDistances(world);*/
     }
 
     @Override

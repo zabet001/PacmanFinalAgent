@@ -13,7 +13,7 @@ W D W W D D D D D W W D W
 W D PP W D D E D D W D D W 
 W D D D D D D D D D D D W 
 W W W W W W W W W W W W W 
-sp:6,2,GHOST_HUNTER,
-sp:2,6,GHOST_EAGER,direction:EAST
-sp:10,6,GHOST_EAGER,direction:EAST
-sp:6,10,,direction:EAST
+sp:6,2,GHOST_HUNTER,direction:EAST
+sp:2,6,GHOST_EAGER,
+sp:10,6,GHOST_EAGER,
+sp:6,10,,
