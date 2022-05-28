@@ -53,7 +53,6 @@ public class Heuristikfunktionen {
             // Aufschieben um n Ziffern (n ist die Anzahl Ziffern der maximalen Distanz)
             final byte maxDistanceDigitCnt = (byte) (Math.log10(Felddistanzen.getMaxDistance()) + 1);
             for (short dist : ghostDist) {
-                System.out.println("Distance to ghost:" + dist);
                 ret *= Math.pow(10,maxDistanceDigitCnt);
                 ret += Felddistanzen.getMaxDistance() - dist;
             }
@@ -62,9 +61,7 @@ public class Heuristikfunktionen {
             if (Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] != 0) {
                 ret *= 100;
             }
-            System.out.println("Max Distance: " + Felddistanzen.getMaxDistance());
-            System.out.printf("For Node at [%d,%d] the heuristic is %f\n",
-                               node.getPosX(),node.getPosY(),ret);
+
             return ret;
         };
     }

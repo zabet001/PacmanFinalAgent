@@ -40,7 +40,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         Sackgassen.initDeadEndDepth(world);
         Felddistanzen.initDistances(world);
 
-        Sackgassen.printOneWayDepthMap(world);
+//        Sackgassen.printOneWayDepthMap(world);
 //        Felddistanzen.printAllDistances(world);
     }
 
@@ -86,7 +86,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
                                          Suche.SearchStrategy.A_STAR, false);
         }
 
-        // Strategie 4: Weglaufen, dabei gefahrliche Felder meiden (notfalls warten)
+        // Strategie 4: Weglaufen, dabei gefahrliche Felder meiden (warten evtl. moeglich)
         if (loesungsKnoten == null) {
             suche = new Suche(
                     Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD, false, percept.getPosX(),
