@@ -1,7 +1,6 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Knoten;
 
 public class PathClosedList extends ClosedList {
     int size;

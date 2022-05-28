@@ -48,13 +48,15 @@ public class Felddistanzen {
 
     public static short calMaxDistance() {
         short max = 0;
-        for (int i = 0; i < distanceMap.length; i++)
-            for (int j = 0; j < distanceMap[0].length; j++)
+        for (int i = 0; i < distanceMap.length; i++) {
+            for (int j = 0; j < distanceMap[0].length; j++) {
                 if (distanceMap[i][j] != null) {
                     if (calMaxDistance(i, j) > max) {
                         max = calMaxDistance(i, j);
                     }
                 }
+            }
+        }
 
         return max;
     }

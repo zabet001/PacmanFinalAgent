@@ -6,12 +6,12 @@ import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
-import de.fh.stud.Knoten;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.Suchen.Suchszenario;
 
 public class MyAgent_P_Final extends PacmanAgent_2021 {
@@ -26,6 +26,29 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 
     }
 
+    @Override
+    protected void onGameStart(PacmanStartInfo startInfo) {
+        PacmanTileType[][] world = startInfo
+                .getPercept()
+                .getView();
+
+        GameStateObserver.reset();
+        GameStateObserver
+                .getGameState()
+                .setRemainingDots(MyUtil.countDots(world));
+
+        Sackgassen.initDeadEndDepth(world);
+        Felddistanzen.initDistances(world);
+
+        Sackgassen.printOneWayDepthMap(world);
+//        Felddistanzen.printAllDistances(world);
+    }
+
+    @Override
+    protected void onGameover(PacmanGameResult gameResult) {
+
+    }
+
     /**
      @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
      @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
@@ -33,21 +56,16 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 
     @Override
     public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
-        // TODO: Bug auf dem Server? Seed: 1702509108
-        //  Trotz 100 Runs auf selben Seed und Replay Last Game
-        //  (mein Agemt sollte deterministisch sein, aber trotzdem crasht er in 50% der faelle in den gegner)
-        //  Random Aktionen L U L L W L
-
         GameStateObserver.updateGameStateBeforeAction(percept, actionEffect);
 
         PacmanAction nextAction = null;
         Suche suche;
         Knoten loesungsKnoten = null;
-        final int EATING_GOAL = 5;
 
         /*
         // Strategie 1: Suche nach bis zu N essbaren Dots
         // Warum auch immer ist damit die Winrate schlechter
+        final int EATING_GOAL = 5;
         suche = new Suche(Suchszenario.eatUpToNDots(EATING_GOAL, GameStateObserver.remainingDots,
                                                     Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
         loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
@@ -75,10 +93,13 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
                                          percept.getPosY()));
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                          Suche.SearchStrategy.A_STAR, false);
+
         }
 
         if (loesungsKnoten != null) {
-            nextAction = loesungsKnoten.identifyActionSequence().get(0);
+            nextAction = loesungsKnoten
+                    .identifyActionSequence()
+                    .get(0);
         }
 
         // Wenn keine Loesung gefunden, vorerst abwarten
@@ -90,7 +111,10 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 
         // Falls abwarten zu gefaehrlich: Strategie 5: Weglaufen und Risiken eingehen (ohne zu warten)
         if (nextAction == PacmanAction.WAIT && MyUtil.ghostNextToPos(percept.getPosX(), percept.getPosY(),
-                                                                     GameStateObserver.getGameState().getNewPercept().getGhostInfos())) {
+                                                                     GameStateObserver
+                                                                             .getGameState()
+                                                                             .getNewPercept()
+                                                                             .getGhostInfos())) {
             System.err.println("WAIT bei Ghost neben Pacman bei " + percept.getPosition() + " ausgefuehrt!");
             for (GhostInfo ghosts : percept.getGhostInfos()) {
                 if (MyUtil.isNeighbour(ghosts.getPos(), percept.getPosition()) && ghosts.getPillTimer() == 0) {
@@ -103,7 +127,9 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
                     loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                                  Suche.SearchStrategy.A_STAR, false);
                     if (loesungsKnoten != null) {
-                        nextAction = loesungsKnoten.identifyActionSequence().get(0);
+                        nextAction = loesungsKnoten
+                                .identifyActionSequence()
+                                .get(0);
                     }
                     else {
                         System.err.println(".....Nowhere to run!");
@@ -115,25 +141,6 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         }
         GameStateObserver.updateGameStateAfterAction(nextAction);
         return nextAction;
-    }
-
-    @Override
-    protected void onGameStart(PacmanStartInfo startInfo) {
-        PacmanTileType[][] world = startInfo.getPercept().getView();
-
-        GameStateObserver.reset();
-        GameStateObserver.getGameState().setRemainingDots(MyUtil.countDots(world));
-
-        Sackgassen.initDeadEndDepth(world);
-        Felddistanzen.initDistances(world);
-/*
-        Sackgassen.printOneWayDepthMap(world);
-        Felddistanzen.printAllDistances(world);*/
-    }
-
-    @Override
-    protected void onGameover(PacmanGameResult gameResult) {
-
     }
 
 }

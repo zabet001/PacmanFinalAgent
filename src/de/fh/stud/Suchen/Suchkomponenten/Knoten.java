@@ -1,9 +1,10 @@
-package de.fh.stud;
+package de.fh.stud.Suchen.Suchkomponenten;
 
 import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Suchen.Suche;
+import de.fh.stud.GameStateObserver;
+import de.fh.stud.MyUtil;
 import de.fh.stud.interfaces.IAccessibilityChecker;
 import de.fh.stud.interfaces.ICallbackFunction;
 import de.fh.stud.interfaces.IGoalPredicate;
@@ -16,31 +17,14 @@ import java.util.Objects;
 
 public class Knoten {
 
-    private static PacmanTileType[][] STATIC_WORLD;
     private static final short COST_LIMIT = 1000;
-
+    private static PacmanTileType[][] STATIC_WORLD;
     private final Knoten pred;
     private final byte[][] view;
-
-    private byte powerpillTimer; // != 0: unverwundbar
     private final short cost;
-
     private final short remainingDots;
-
     private final byte posX, posY;
-
-    // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichernrn?
-    //  (vllt. z.B. Objekt Zusatzinformationen -> Knoten (unidirektionale Assoziation)
-    public static Knoten generateRoot(boolean isStateSearch, PacmanTileType[][] world, int posX, int posY) {
-        Knoten.STATIC_WORLD = world;
-        // Das Spawnfeld fuer die Suche ignorieren
-        PacmanTileType zw = world[posX][posY];
-        world[posX][posY] = PacmanTileType.EMPTY;
-        Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
-        // Spawnfeld wieder zuruecksetzen
-        world[posX][posY] = zw;
-        return ret;
-    }
+    private byte powerpillTimer; // != 0: unverwundbar
 
     private Knoten(boolean isStateSearch, byte posX, byte posY) {
         this(isStateSearch, null, posX, posY);
@@ -57,7 +41,9 @@ public class Knoten {
 
             this.cost = 0;
             this.remainingDots = MyUtil.countDots(STATIC_WORLD);
-            this.powerpillTimer = isStateSearch ? GameStateObserver.getGameState().getPowerpillTimer() : 0;
+            this.powerpillTimer = isStateSearch ? GameStateObserver
+                    .getGameState()
+                    .getPowerpillTimer() : 0;
         }
         else {
             // Kindknoten
@@ -67,6 +53,24 @@ public class Knoten {
             this.powerpillTimer = calcPowerpillTimer(isStateSearch, pred, posX, posY);
         }
 
+    }
+
+    // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichernrn?
+    //  (vllt. z.B. Objekt Zusatzinformationen -> Knoten (unidirektionale Assoziation)
+    public static Knoten generateRoot(boolean isStateSearch, PacmanTileType[][] world, int posX, int posY) {
+        Knoten.STATIC_WORLD = world;
+        // Das Spawnfeld fuer die Suche ignorieren
+        PacmanTileType zw = world[posX][posY];
+        world[posX][posY] = PacmanTileType.EMPTY;
+        Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
+        // Spawnfeld wieder zuruecksetzen
+        world[posX][posY] = zw;
+        return ret;
+    }
+
+    // region Getter und Setter
+    public static PacmanTileType[][] getStaticWorld() {
+        return STATIC_WORLD;
     }
 
     private short calcRemainingDots(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
@@ -124,17 +128,19 @@ public class Knoten {
         return accessibilityChecker.isAccessible(this, newPosX, newPosY);
     }
 
-    public List<Knoten> expand(boolean isStateSearch,boolean noWait,IAccessibilityChecker accessibilityChecker) {
+    public List<Knoten> expand(boolean isStateSearch, boolean noWait, IAccessibilityChecker accessibilityChecker) {
         // Macht es einen Unterschied, wenn NEIGHBOUR_POS pro expand aufruf neu erzeugt wird? Ja
         List<Knoten> children = new LinkedList<>();
 
         for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
-            if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),accessibilityChecker)) {
-                children.add(new Knoten(isStateSearch,this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
+            if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),
+                                                accessibilityChecker)) {
+                children.add(
+                        new Knoten(isStateSearch, this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        if (!noWait && cost < COST_LIMIT && isPassable(posX, posY,accessibilityChecker)) {
-            children.add(new Knoten(isStateSearch,this, posX, posY));
+        if (!noWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityChecker)) {
+            children.add(new Knoten(isStateSearch, this, posX, posY));
         }
 
         return children;
@@ -193,6 +199,13 @@ public class Knoten {
     }
 
     @Override
+    public int hashCode() {
+        int result = Objects.hash(remainingDots, posX, posY);
+        result = 31 * result + Arrays.deepHashCode(view);
+        return result;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
@@ -203,18 +216,6 @@ public class Knoten {
         Knoten knoten = (Knoten) o;
         return remainingDots == knoten.remainingDots && posX == knoten.posX && posY == knoten.posY
                 && /*heuristicalValue() == ((Knoten) o).heuristicalValue() &&*/ Arrays.deepEquals(view, knoten.view);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = Objects.hash(remainingDots, posX, posY);
-        result = 31 * result + Arrays.deepHashCode(view);
-        return result;
-    }
-
-    // region Getter und Setter
-    public static PacmanTileType[][] getStaticWorld() {
-        return STATIC_WORLD;
     }
 
     public byte[][] getView() {

@@ -18,19 +18,23 @@ public class Zielfunktionen {
     }
 
     public static IGoalPredicate powerpillEaten() {
-        return node -> node.getPred() != null && MyUtil.isPowerpillType(
-                MyUtil.byteToTile(node.getPred().getView()[node.getPosX()][node.getPosY()]));
+        return node -> node.getPred() != null && MyUtil.isPowerpillType(MyUtil.byteToTile(node
+                                                                                                  .getPred()
+                                                                                                  .getView()[node.getPosX()][node.getPosY()]));
     }
 
     public static IGoalPredicate dotEaten(boolean isStateSearch) {
         if (isStateSearch) {
-            return node -> node.getPred() != null && node.getRemainingDots() < node.getPred().getRemainingDots();
+            return node -> node.getPred() != null && node.getRemainingDots() < node
+                    .getPred()
+                    .getRemainingDots();
         }
-        return node -> node.getPred() != null && MyUtil.isDotType(
-                MyUtil.byteToTile(node.getPred().getView()[node.getPosX()][node.getPosY()]));
+        return node -> node.getPred() != null && MyUtil.isDotType(MyUtil.byteToTile(node
+                                                                                            .getPred()
+                                                                                            .getView()[node.getPosX()][node.getPosY()]));
     }
 
-    public static IGoalPredicate amountOfDotsEaten(int amount,int startingCnt) {
+    public static IGoalPredicate amountOfDotsEaten(int amount, int startingCnt) {
         return node -> node.getRemainingDots() == 0 || startingCnt - amount >= node.getRemainingDots();
     }
 
@@ -50,6 +54,10 @@ public class Zielfunktionen {
 
     public static IGoalPredicate notOnPosition(int startPosX, int startPosY) {
         return node -> node.getPosX() != startPosX || node.getPosY() != startPosY;
+    }
+
+    public static IGoalPredicate didAnAction(int startPosX, int startPosY) {
+        return node -> node.getPred() != null;
     }
 
     public static IGoalPredicate minimumNeighbours(int numberOfNeighbours, IAccessibilityChecker accessibilityChecker) {

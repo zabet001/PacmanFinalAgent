@@ -1,7 +1,6 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Knoten;
 
 public abstract class ClosedList {
     public static ClosedList buildClosedList(boolean isStateSearch, PacmanTileType[][] world) {

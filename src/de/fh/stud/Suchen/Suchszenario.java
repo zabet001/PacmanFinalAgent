@@ -52,10 +52,12 @@ public class Suchszenario {
 
     public static Suchszenario runAway(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode, boolean noWait,
                                        int startPosX, int startPosY) {
-        return new Suchszenario(isStateProblem, Zugangsfilter.avoidThese(avoidMode), noWait,
-                                Zielfunktionen.notOnPosition(startPosX, startPosY),
-                                Heuristikfunktionen.distanceToCloserGhosts(
-                                        GameStateObserver.getGameState().getNewPercept().getGhostInfos()));
+        return new Suchszenario(isStateProblem, Zugangsfilter.merge(Zugangsfilter.avoidThese(avoidMode)), noWait,
+                                Zielfunktionen.didAnAction(startPosX, startPosY),
+                                Heuristikfunktionen.distanceToCloserGhosts(GameStateObserver
+                                                                                   .getGameState()
+                                                                                   .getNewPercept()
+                                                                                   .getGhostInfos()));
     }
 
     /**

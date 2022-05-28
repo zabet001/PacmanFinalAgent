@@ -9,11 +9,11 @@ import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
-import de.fh.stud.Knoten;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.Suchen.Suchszenario;
 
 import java.util.List;
@@ -30,6 +30,23 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
     public static void main(String[] args) {
         MyAgent_P3 agent = new MyAgent_P3("MyAgent");
         Agent.start(agent, "127.0.0.1", 5000);
+    }
+
+    @Override
+    protected void onGameStart(PacmanStartInfo startInfo) {
+        PacmanTileType[][] world = startInfo
+                .getPercept()
+                .getView();
+        Sackgassen.initDeadEndDepth(world);
+        Felddistanzen.initDistances(world);
+
+        Sackgassen.printOneWayDepthMap(world);
+        Felddistanzen.printAllDistances(world);
+    }
+
+    @Override
+    protected void onGameover(PacmanGameResult gameResult) {
+
     }
 
     /**
@@ -62,21 +79,6 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             //Ansonsten wurde keine Lösung gefunden und der Pacman kann das Spiel aufgeben
             return PacmanAction.QUIT_GAME;
         }
-
-    }
-
-    @Override
-    protected void onGameStart(PacmanStartInfo startInfo) {
-        PacmanTileType[][] world = startInfo.getPercept().getView();
-        Sackgassen.initDeadEndDepth(world);
-        Felddistanzen.initDistances(world);
-
-        Sackgassen.printOneWayDepthMap(world);
-        Felddistanzen.printAllDistances(world);
-    }
-
-    @Override
-    protected void onGameover(PacmanGameResult gameResult) {
 
     }
 

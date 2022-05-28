@@ -2,10 +2,10 @@ package de.fh.stud.Suchen;
 
 import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Knoten;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Suchfunktionen.CallbackFunktionen;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 
 import java.util.AbstractMap;
 import java.util.LinkedList;
@@ -18,9 +18,11 @@ public class Sackgassen {
 
     // Hinweis: Wenn die Map ohne Zyklen ist, wird eine Sackgasse nicht als solche erkannt
     public static byte[][] deadEndDepth;
+    public static Vector2[][] deadEndEntry;
 
     public static void initDeadEndDepth(PacmanTileType[][] world) {
         deadEndDepth = new byte[world.length][world[0].length];
+        deadEndEntry = new Vector2[world.length][world[0].length];
 
         // Schritt 1: Alle Sackgassenenden ausfindig machen
         /** Tupel: (Sackgassenende,Vorgaenger), um spaterer das erste Feld in der Sackgasse wiederzufinden*/
@@ -30,9 +32,11 @@ public class Sackgassen {
         besuchten Felder markieren mit cost -1
          -> Sackgassen letzter Stufe werden "temporaer geschlossen": mehrstufige sackgassen werden einstufig*/
         for (int i = 0; i < oneWays.size(); i++) {
-            AbstractMap.SimpleEntry<Vector2, Vector2> oneWayStartTuple = locateStartOfOneWay(world,
-                                                                                             oneWays.get(i).getKey().x,
-                                                                                             oneWays.get(i).getKey().y);
+            AbstractMap.SimpleEntry<Vector2, Vector2> oneWayStartTuple = locateStartOfOneWay(world, oneWays
+                    .get(i)
+                    .getKey().x, oneWays
+                                                                                                     .get(i)
+                                                                                                     .getKey().y);
             if (oneWayStartTuple != null) {
                 oneWays.add(i, oneWayStartTuple);
                 oneWays.remove(i + 1);
@@ -63,7 +67,16 @@ public class Sackgassen {
             }
             System.out.println();
         }
+        System.out.println();
 
+        for (int i = 0; i < deadEndEntry[0].length; i++) {
+            for (int j = 0; j < deadEndEntry.length; j++) {
+                System.out.printf("%7s ", world[j][i] == PacmanTileType.WALL ? "[|||||]" :
+                        deadEndEntry[j][i] == null ? "       " : String.format("[%d/%d]", deadEndEntry[j][i].x,
+                                                                               deadEndEntry[j][i].y));
+            }
+            System.out.println();
+        }
         System.out.println();
     }
 
@@ -99,8 +112,9 @@ public class Sackgassen {
             return null;
         }
 
-
-        return new AbstractMap.SimpleEntry<>(oneWayStart.getPosition(), oneWayStart.getPred().getPosition());
+        return new AbstractMap.SimpleEntry<>(oneWayStart.getPosition(), oneWayStart
+                .getPred()
+                .getPosition());
     }
 
     /**
@@ -110,9 +124,10 @@ public class Sackgassen {
     private static void writeOneWayDepth(PacmanTileType[][] world, Vector2 oneWayEntry, Vector2 oneWayGate) {
         Suche writeDepths = new Suche(false, Zugangsfilter.merge(Zugangsfilter.noWall(),
                                                                  Zugangsfilter.excludePositions(oneWayGate)), true,
-                                      null, null,
-                                      expCand -> deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (
-                                              expCand.getCost() + 1));
+                                      null, null, expCand -> {
+            deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (expCand.getCost() + 1);
+            deadEndEntry[expCand.getPosX()][expCand.getPosY()] = oneWayGate;
+        });
         writeDepths.start(world, oneWayEntry.x, oneWayEntry.y, Suche.SearchStrategy.DEPTH_FIRST, false);
 
     }

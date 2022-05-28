@@ -1,6 +1,5 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
-import de.fh.stud.Knoten;
 import de.fh.stud.Suchen.Suche;
 
 import java.util.LinkedList;

@@ -2,9 +2,9 @@ package de.fh.stud.Suchen.Suchfunktionen;
 
 import de.fh.kiServer.util.Util;
 import de.fh.pacman.GhostInfo;
-import de.fh.stud.Knoten;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
+import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.interfaces.IHeuristicFunction;
 
 import java.util.Arrays;
@@ -36,7 +36,9 @@ public class Heuristikfunktionen {
     }
 
     public static IHeuristicFunction sumDistanceToGhosts(List<GhostInfo> ghosts) {
-        return node -> Felddistanzen.getMaxDistance() - Felddistanzen.Geisterdistanz.sumOfGhostDistances(node.getPosX(), node.getPosY(), ghosts);
+        return node -> Felddistanzen.getMaxDistance() - Felddistanzen.Geisterdistanz.sumOfGhostDistances(node.getPosX(),
+                                                                                                         node.getPosY(),
+                                                                                                         ghosts);
     }
 
     public static IHeuristicFunction distanceToCloserGhosts(List<GhostInfo> ghosts) {
@@ -48,9 +50,22 @@ public class Heuristikfunktionen {
             }
             float ret = 0;
             Arrays.sort(ghostDist);
-            for (int i = 0; i < ghostDist.length; i++)
-                ret += (100f / 10 * (i + 1) * Felddistanzen.getMaxDistance()) * ghostDist[i];
-            return Felddistanzen.getMaxDistance() - ret;
+            // Aufschieben um n Ziffern (n ist die Anzahl Ziffern der maximalen Distanz)
+            final byte maxDistanceDigitCnt = (byte) (Math.log10(Felddistanzen.getMaxDistance()) + 1);
+            for (short dist : ghostDist) {
+                System.out.println("Distance to ghost:" + dist);
+                ret *= Math.pow(10,maxDistanceDigitCnt);
+                ret += Felddistanzen.getMaxDistance() - dist;
+            }
+
+            // TODO: Unschön, fixen (Pacman sollte nicht in Sackgassen reinlaufen, aber aus Sackgassen rauslaufen)
+            if (Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] != 0) {
+                ret *= 100;
+            }
+            System.out.println("Max Distance: " + Felddistanzen.getMaxDistance());
+            System.out.printf("For Node at [%d,%d] the heuristic is %f\n",
+                               node.getPosX(),node.getPosY(),ret);
+            return ret;
         };
     }
 

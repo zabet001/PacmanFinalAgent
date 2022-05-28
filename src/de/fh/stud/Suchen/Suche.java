@@ -2,9 +2,9 @@ package de.fh.stud.Suchen;
 
 import de.fh.kiServer.util.Util;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Knoten;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Suchkomponenten.ClosedList;
+import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.Suchen.Suchkomponenten.OpenList;
 import de.fh.stud.interfaces.IAccessibilityChecker;
 import de.fh.stud.interfaces.ICallbackFunction;
@@ -17,7 +17,7 @@ import java.util.*;
 public class Suche {
 
     public static final int MAX_SOLUTION_LIMIT = Integer.MAX_VALUE;
-    private static final boolean SHOW_RESULTS = true;
+    private static final boolean SHOW_RESULTS = false;
     private static final boolean PRINT_AVG_RUNTIME = false;
 
     public static boolean searchRunning = false;
@@ -25,17 +25,12 @@ public class Suche {
 
     // TODO: Heuristiken, Kosten, Goal etc. in Suche teilen
     //  (z.B. Objekt Knoteninformationen -> Knoten (unidirektionale Assoziation)
-
-    private boolean noWaitAction;
     private final boolean stateSearch;
     private final IAccessibilityChecker accessCheck;
     private final IGoalPredicate goalPred;
     private final IHeuristicFunction heuristicFunc;
     private final ICallbackFunction[] callbackFuncs;
-
-    public enum SearchStrategy {
-        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
-    }
+    private boolean noWaitAction;
 
     public Suche(Suchszenario searchScenario) {
         this(searchScenario.isStateProblem(), searchScenario.getAccessCheck(), searchScenario.isNoWait(),
@@ -81,23 +76,27 @@ public class Suche {
 
     public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit,
                               boolean showResults) {
-        Knoten rootNode = Knoten.generateRoot(stateSearch,world, posX, posY);
+        Knoten rootNode = Knoten.generateRoot(stateSearch, world, posX, posY);
 
         long startTime = System.nanoTime();
         AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> searchResult = beginSearch(rootNode,
                                                                                               OpenList.buildOpenList(
-                                                                                                      strategy,heuristicFunc),
+                                                                                                      strategy,
+                                                                                                      heuristicFunc),
                                                                                               ClosedList.buildClosedList(
                                                                                                       isStateSearch(),
                                                                                                       world),
                                                                                               solutionLimit, startTime);
 
         if (PRINT_AVG_RUNTIME) {
-            double elapsedTime = searchResult.getValue().get("Rechenzeit in ms.");
+            double elapsedTime = searchResult
+                    .getValue()
+                    .get("Rechenzeit in ms.");
             runTimes.add(elapsedTime);
             MyUtil.println(String.format("Laufzeit fuer Durchlauf Nr. %d: %.2f ms.\n", runTimes.size(), elapsedTime));
-            MyUtil.println(String.format("Durchschnittliche. Laufzeit: %.2f ms.",
-                                         runTimes.stream().reduce(0.0, Double::sum) / runTimes.size()));
+            MyUtil.println(String.format("Durchschnittliche. Laufzeit: %.2f ms.", runTimes
+                    .stream()
+                    .reduce(0.0, Double::sum) / runTimes.size()));
             MyUtil.println("...");
         }
         if (showResults) {
@@ -117,6 +116,7 @@ public class Suche {
 
         while (!openList.isEmpty()) {
             expCand = openList.remove();
+
             if (expCand.isGoalNode(goalPred)) {
                 goalNodes.add(expCand);
                 if (goalNodes.size() >= solutionLimit) {
@@ -126,7 +126,9 @@ public class Suche {
             if (!closedList.contains(expCand)) {
                 closedList.add(expCand);
                 expCand.executeCallbacks(callbackFuncs);
-                expCand.expand(stateSearch,noWaitAction,accessCheck).forEach(openList::add);
+                expCand
+                        .expand(stateSearch, noWaitAction, accessCheck)
+                        .forEach(openList::add);//(openList::add);
             }
         }
 
@@ -151,10 +153,13 @@ public class Suche {
                                                                        Ziel wurde %sgefunden
                                                                        Suchalgorithmus: %s
                                                                        Suchart: %s
-                                                                       """, result.getKey().size() != 0 ? "" : "nicht ",
-                                                               strategy,
+                                                                       """, result
+                                                                       .getKey()
+                                                                       .size() != 0 ? "" : "nicht ", strategy,
                                                                isStateSearch() ? "Zustandssuche" : "Wegsuche"));
-        for (Map.Entry<String, Double> info_value : result.getValue().entrySet()) {
+        for (Map.Entry<String, Double> info_value : result
+                .getValue()
+                .entrySet()) {
             // Anhaengende nullen nach dem Komma entfernen
             String val = String.format("%,.3f", info_value.getValue());
             int i = val.length() - 1;
@@ -169,7 +174,6 @@ public class Suche {
         jf.setAlwaysOnTop(true);
         JOptionPane.showMessageDialog(jf, report.toString());
     }
-
 
     public boolean isStateSearch() {
         return stateSearch;
@@ -197,5 +201,9 @@ public class Suche {
 
     public void setNoWaitAction(boolean noWaitAction) {
         this.noWaitAction = noWaitAction;
+    }
+
+    public enum SearchStrategy {
+        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
     }
 }

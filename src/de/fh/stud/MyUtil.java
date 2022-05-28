@@ -4,7 +4,6 @@ import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Suchen.Suche;
 
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +58,6 @@ public class MyUtil {
         }
         return neighbourCnt;
     }
-
 
     public static boolean isNeighbour(Vector2 pos1, Vector2 pos2) {
         for (byte[] neighbour : NEIGHBOUR_POS) {

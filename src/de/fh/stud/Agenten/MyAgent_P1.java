@@ -25,6 +25,16 @@ public class MyAgent_P1 extends PacmanAgent_2021 {
         Agent.start(agent, "127.0.0.1", 5000);
     }
 
+    @Override
+    protected void onGameStart(PacmanStartInfo startInfo) {
+
+    }
+
+    @Override
+    protected void onGameover(PacmanGameResult gameResult) {
+
+    }
+
     /**
      @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
      @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
@@ -40,15 +50,5 @@ public class MyAgent_P1 extends PacmanAgent_2021 {
         }
 
         return nextAction;
-    }
-
-    @Override
-    protected void onGameStart(PacmanStartInfo startInfo) {
-
-    }
-
-    @Override
-    protected void onGameover(PacmanGameResult gameResult) {
-
     }
 }

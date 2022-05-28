@@ -10,13 +10,9 @@ import de.fh.stud.interfaces.IAccessibilityChecker;
 
 public class Zugangsfilter {
 
-    public enum AvoidMode {
-        ONLY_WALLS, GHOSTS_ON_FIELD, GHOSTS_THREATENS_FIELD
-    }
-
     public static IAccessibilityChecker merge(IAccessibilityChecker... accessibilityCheckers) {
         return (node, newPosX, newPosY) -> {
-                for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
+            for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
                 if (!accessibilityChecker.isAccessible(node, newPosX, newPosY)) {
                     return false;
                 }
@@ -56,15 +52,38 @@ public class Zugangsfilter {
                 return true;
             }
             if (node.getPowerpillTimer() == 0) {
-                // TODO: Pacman stirbt, wenn der Ghost wieder respawnt und trotz aktiver Pille den Pacman schlaegt
-                //  -> Man muesste den Spawnpoint des Ghosts finden, und der Ghost von dort aus ist dann gefaehrlich (was zu viel Arbeit abverlangt)
-                if (MyUtil.ghostNextToPos(newPosX, newPosY, GameStateObserver.getGameState().getNewPercept().getGhostInfos())) {
+                if (MyUtil.ghostNextToPos(newPosX, newPosY, GameStateObserver
+                        .getGameState()
+                        .getNewPercept()
+                        .getGhostInfos())) {
                     return false;
                 }
-                return node.getRemainingDots() == 1 || Sackgassen.deadEndDepth[newPosX][newPosY] <= 0 ||
-                        Felddistanzen.Geisterdistanz.minimumGhostDistance(node.getPosX(), node.getPosY(),
-                                                                          GameStateObserver.getGameState().getNewPercept().getGhostInfos())
-                                > 2 * Sackgassen.deadEndDepth[newPosX][newPosY];
+                if (Sackgassen.deadEndDepth[newPosX][newPosY] <= 0) {
+                    return true;
+                }
+
+                // TODO: Nicht nur gucken, ob dieses Feld der Sackgasse betretbar ist, sondern alle Felder dieser
+                //  Sackgasse
+                //  (Wie loest man das denn bei verzweigten Sackgassen?)
+                if (Felddistanzen.Geisterdistanz.minimumGhostDistance(Sackgassen.deadEndEntry[newPosX][newPosY].x,
+                                                                      Sackgassen.deadEndEntry[newPosX][newPosY].y,
+                                                                      GameStateObserver
+                                                                              .getGameState()
+                                                                              .getNewPercept()
+                                                                              .getGhostInfos())
+                        <= node.getCost() + 1 + Sackgassen.deadEndDepth[newPosX][newPosY]) {
+
+                    // System.err.println("Sackgasse nicht verlassbar");
+
+                    if (node.getRemainingDots() == 1) {
+                        return true;
+                    }
+                    // TODO: Stattdessen: Wenn der Pacman in die Sackgasse geht aus der man nicht wieder raus kommen wird
+                    //  ABER alle Dots in derselben Sackgasse sind (können mit einer NICHT-Zustandssuche abgegrasen
+                    //  werden) ist das Feld save
+                    return false;
+                }
+                return true;
             }
             return true;
         };
@@ -83,6 +102,10 @@ public class Zugangsfilter {
             }
             return true;
         };
+    }
+
+    public enum AvoidMode {
+        ONLY_WALLS, GHOSTS_ON_FIELD, GHOSTS_THREATENS_FIELD
     }
 
 }

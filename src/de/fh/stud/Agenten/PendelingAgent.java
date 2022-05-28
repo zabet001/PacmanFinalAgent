@@ -11,6 +11,7 @@ import de.fh.pacman.enums.PacmanTileType;
 
 public class PendelingAgent extends PacmanAgent_2021 {
 
+    boolean goingLeft;
     /**
      Die als nächstes auszuführende Aktion
      */
@@ -25,7 +26,15 @@ public class PendelingAgent extends PacmanAgent_2021 {
         Agent.start(agent, "127.0.0.1", 5000);
     }
 
-    boolean goingLeft;
+    @Override
+    protected void onGameStart(PacmanStartInfo startInfo) {
+
+    }
+
+    @Override
+    protected void onGameover(PacmanGameResult gameResult) {
+
+    }
 
     /**
      @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
@@ -39,15 +48,5 @@ public class PendelingAgent extends PacmanAgent_2021 {
         }
 
         return PacmanAction.values()[1 + (goingLeft ? 0 : 1)];
-    }
-
-    @Override
-    protected void onGameStart(PacmanStartInfo startInfo) {
-
-    }
-
-    @Override
-    protected void onGameover(PacmanGameResult gameResult) {
-
     }
 }

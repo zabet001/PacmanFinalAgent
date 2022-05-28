@@ -1,7 +1,5 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
-import de.fh.stud.Knoten;
-
 import java.util.HashSet;
 
 public class StateClosedList extends ClosedList {
