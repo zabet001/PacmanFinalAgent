@@ -9,6 +9,7 @@ import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanActionEffect;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
+import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
@@ -32,23 +33,6 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
         Agent.start(agent, "127.0.0.1", 5000);
     }
 
-    @Override
-    protected void onGameStart(PacmanStartInfo startInfo) {
-        PacmanTileType[][] world = startInfo
-                .getPercept()
-                .getView();
-        Sackgassen.initDeadEndDepth(world);
-        Felddistanzen.initDistances(world);
-
-        Sackgassen.printOneWayDepthMap(world);
-        Felddistanzen.printAllDistances(world);
-    }
-
-    @Override
-    protected void onGameover(PacmanGameResult gameResult) {
-
-    }
-
     /**
      @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
      @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
@@ -61,8 +45,11 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             int goalx = 13;
             int goaly = 1;
 
-            Suche suche = new Suche(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD));
-            suche.setNoWaitAction(true);
+            Suche suche = new Suche.SucheBuilder(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.ONLY_WALLS))
+                    .setWithWaitAction(false)
+                    .setPrintResults(true)
+                    .setDisplayResults(true)
+                    .createSuche();
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                          Suche.SearchStrategy.A_STAR);
             if (loesungsKnoten != null) {
@@ -82,4 +69,26 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
 
     }
 
+    @Override
+    protected void onGameStart(PacmanStartInfo startInfo) {
+        PacmanTileType[][] world = startInfo
+                .getPercept()
+                .getView();
+
+        GameStateObserver.reset();
+        GameStateObserver
+                .getGameState()
+                .setRemainingDots(MyUtil.countDots(world));
+
+//        Sackgassen.initDeadEndDepth(world);
+//        Felddistanzen.initDistances(world);
+//
+//        Sackgassen.printOneWayDepthMap(world);
+//        Felddistanzen.printAllDistances(world);
+    }
+
+    @Override
+    protected void onGameover(PacmanGameResult gameResult) {
+
+    }
 }

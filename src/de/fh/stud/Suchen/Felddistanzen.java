@@ -38,10 +38,14 @@ public class Felddistanzen {
     private static short[][] allDistances(PacmanTileType[][] world, int fieldX, int fieldY, Consumer<Short> callback) {
         short[][] distancesForThisPos = new short[world.length][world[0].length];
 
-        Suche writeDistances = new Suche(false, Zugangsfilter.noWall(), true, null, null,
-                                         CallbackFunktionen.saveStepCost(distancesForThisPos),
-                                         expCand -> callback.accept(expCand.getCost()));
-        writeDistances.start(world, fieldX, fieldY, Suche.SearchStrategy.BREADTH_FIRST, false);
+        Suche writeDistances = new Suche.SucheBuilder()
+                .setStateSearch(false)
+                .setWithWaitAction(false)
+                .setAccessCheck(Zugangsfilter.noWall())
+                .setCallbackFuncs(CallbackFunktionen.saveStepCost(distancesForThisPos),
+                                  expCand -> callback.accept(expCand.getCost()))
+                .createSuche();
+        writeDistances.start(world, fieldX, fieldY, Suche.SearchStrategy.BREADTH_FIRST);
 
         return distancesForThisPos;
     }

@@ -16,6 +16,8 @@ import de.fh.stud.Suchen.Suchszenario;
 
 public class MyAgent_P_Final extends PacmanAgent_2021 {
 
+    private static final int RUN_AWAY_DISTANCE = 5;
+
     public MyAgent_P_Final(String name) {
         super(name);
     }
@@ -24,6 +26,108 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         MyAgent_P_Final agent = new MyAgent_P_Final("MyFinalAgent");
         Agent.start(agent, "127.0.0.1", 5000);
 
+    }
+
+    /**
+     @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
+     @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
+     */
+    @Override
+    public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
+        GameStateObserver.updateGameStateBeforeAction(percept, actionEffect);
+
+        PacmanAction nextAction;
+        Suche suche;
+        Knoten loesungsKnoten = null;
+
+        /*
+        // Strategie 1: Suche nach bis zu N essbaren Dots
+        // Warum auch immer ist damit die Winrate schlechter
+        final int EATING_GOAL = 5;
+        suche = new Suche(Suchszenario.eatUpToNDots(EATING_GOAL, GameStateObserver.remainingDots,
+                                                    Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
+        loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                                     Suche.SearchStrategy.A_STAR, false);
+        */
+
+        // Strategie 2: Suche nach essbaren Dots
+        if (loesungsKnoten == null) {
+            suche = new Suche.SucheBuilder(
+                    Suchszenario.eatNearestDot(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
+            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                                         Suche.SearchStrategy.A_STAR);
+        }
+
+        // Strategie 3: Sammle Powerpille ein, um potentielle Loesungen zu finden
+        if (loesungsKnoten == null) {
+            suche = new Suche.SucheBuilder(
+                    Suchszenario.eatNearestPowerpill(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
+            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                                         Suche.SearchStrategy.A_STAR);
+        }
+
+        // Strategie 4: Abwarten und beobachten, falls Geister weit genug weg
+        if (loesungsKnoten == null) {
+            // Strategie 5: Weglaufen, falls Geister nah dabei gefahrliche Felder meiden (warten evtl. moeglich)
+            if (Felddistanzen.Geisterdistanz.minimumGhostDistance(percept.getPosX(), percept.getPosY(),
+                                                                  percept.getGhostInfos()) <= RUN_AWAY_DISTANCE) {
+                suche = new Suche.SucheBuilder(
+                        Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD, percept.getPosX(),
+                                             percept.getPosY())).createSuche();
+                loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                                             Suche.SearchStrategy.A_STAR);
+            }
+            else {
+                // System.out.println("Keine Loesung gefunden: Vorerst WAIT");
+            }
+
+        }
+
+        // Loesung gefunden: Actions bestimmen
+        if (loesungsKnoten != null) {
+            nextAction = loesungsKnoten
+                    .identifyActionSequence()
+                    .get(0);
+        }
+        // Wenn keine Loesung gefunden, vorerst abwarten
+        else {
+            nextAction = PacmanAction.WAIT;
+        }
+
+        if (nextAction == PacmanAction.WAIT && MyUtil.ghostNextToPos(percept.getPosX(), percept.getPosY(),
+                                                                     GameStateObserver
+                                                                             .getGameState()
+                                                                             .getNewPercept()
+                                                                             .getGhostInfos())) {
+            // System.err.println("WAIT bei Ghost neben Pacman bei " + percept.getPosition() + " ausgefuehrt!");
+            for (GhostInfo ghosts : percept.getGhostInfos()) {
+                if (MyUtil.isNeighbour(ghosts.getPos(), percept.getPosition()) && ghosts.getPillTimer() == 0) {
+                    // Falls abwarten zu gefaehrlich: Strategie 6: Weglaufen und Risiken eingehen (ohne zu warten)
+//                     System.err.println("-> WAIT bei toedlichem Ghost neben Pacman ausgefuehrt!!!!");
+//                     System.err.println("-- Gehe Risiko ein !!!!");
+                    // TODO: Gewichtung nach Geisttyp (eher zum Random, als zum Hunter gehen)
+                    suche = new Suche.SucheBuilder(
+                            Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD, percept.getPosX(),
+                                                 percept.getPosY()))
+                            .setWithWaitAction(false)
+                            .createSuche();
+                    loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
+                                                 Suche.SearchStrategy.A_STAR);
+                    if (loesungsKnoten != null) {
+                        nextAction = loesungsKnoten
+                                .identifyActionSequence()
+                                .get(0);
+                    }
+                    else {
+//                        System.err.println(".....Nowhere to run!");
+                    }
+                    break;
+                }
+            }
+
+        }
+        GameStateObserver.updateGameStateAfterAction(nextAction);
+        return nextAction;
     }
 
     @Override
@@ -46,101 +150,6 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 
     @Override
     protected void onGameover(PacmanGameResult gameResult) {
-
-    }
-
-    /**
-     @param percept - Aktuelle Wahrnehmung des Agenten, bspw. Position der Geister und Zustand aller Felder der Welt.
-     @param actionEffect - Aktuelle Rückmeldung des Server auf die letzte übermittelte Aktion.
-     */
-
-    @Override
-    public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
-        GameStateObserver.updateGameStateBeforeAction(percept, actionEffect);
-
-        PacmanAction nextAction = null;
-        Suche suche;
-        Knoten loesungsKnoten = null;
-
-        /*
-        // Strategie 1: Suche nach bis zu N essbaren Dots
-        // Warum auch immer ist damit die Winrate schlechter
-        final int EATING_GOAL = 5;
-        suche = new Suche(Suchszenario.eatUpToNDots(EATING_GOAL, GameStateObserver.remainingDots,
-                                                    Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
-        loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                                     Suche.SearchStrategy.A_STAR, false);
-        */
-
-        // Strategie 2: Suche nach essbaren Dots
-        if (loesungsKnoten == null) {
-            suche = new Suche(Suchszenario.eatNearestDot(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
-            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                                         Suche.SearchStrategy.A_STAR, false);
-        }
-
-        // Strategie 3: Sammle Powerpille ein, um potentielle Loesungen zu finden
-        if (loesungsKnoten == null) {
-            suche = new Suche(Suchszenario.eatNearestPowerpill(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD));
-            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                                         Suche.SearchStrategy.A_STAR, false);
-        }
-
-        // Strategie 4: Weglaufen, dabei gefahrliche Felder meiden (warten evtl. moeglich)
-        if (loesungsKnoten == null) {
-            suche = new Suche(
-                    Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD, false, percept.getPosX(),
-                                         percept.getPosY()));
-            loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                                         Suche.SearchStrategy.A_STAR, false);
-
-        }
-
-        if (loesungsKnoten != null) {
-            nextAction = loesungsKnoten
-                    .identifyActionSequence()
-                    .get(0);
-        }
-
-        // Wenn keine Loesung gefunden, vorerst abwarten
-        if (nextAction == null) {
-            System.out.println("Keine Loesung gefunden: WAIT");
-            nextAction = PacmanAction.WAIT;
-
-        }
-
-        // Falls abwarten zu gefaehrlich: Strategie 5: Weglaufen und Risiken eingehen (ohne zu warten)
-        if (nextAction == PacmanAction.WAIT && MyUtil.ghostNextToPos(percept.getPosX(), percept.getPosY(),
-                                                                     GameStateObserver
-                                                                             .getGameState()
-                                                                             .getNewPercept()
-                                                                             .getGhostInfos())) {
-            System.err.println("WAIT bei Ghost neben Pacman bei " + percept.getPosition() + " ausgefuehrt!");
-            for (GhostInfo ghosts : percept.getGhostInfos()) {
-                if (MyUtil.isNeighbour(ghosts.getPos(), percept.getPosition()) && ghosts.getPillTimer() == 0) {
-                    System.err.println("-> WAIT bei toedlichem Ghost neben Pacman ausgefuehrt!!!!");
-                    System.err.println("-- Gehe Risiko ein !!!!");
-                    // TODO: Gewichtung nach Geisttyp (eher zum Random, als zum Hunter gehen)
-                    suche = new Suche(
-                            Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD, true, percept.getPosX(),
-                                                 percept.getPosY()));
-                    loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-                                                 Suche.SearchStrategy.A_STAR, false);
-                    if (loesungsKnoten != null) {
-                        nextAction = loesungsKnoten
-                                .identifyActionSequence()
-                                .get(0);
-                    }
-                    else {
-                        System.err.println(".....Nowhere to run!");
-                    }
-                    break;
-                }
-            }
-
-        }
-        GameStateObserver.updateGameStateAfterAction(nextAction);
-        return nextAction;
     }
 
 }

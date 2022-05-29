@@ -24,7 +24,7 @@ public class Knoten {
     private final short cost;
     private final short remainingDots;
     private final byte posX, posY;
-    private byte powerpillTimer; // != 0: unverwundbar
+    private final byte powerpillTimer; // != 0: unverwundbar
 
     private Knoten(boolean isStateSearch, byte posX, byte posY) {
         this(isStateSearch, null, posX, posY);
@@ -68,7 +68,6 @@ public class Knoten {
         return ret;
     }
 
-    // region Getter und Setter
     public static PacmanTileType[][] getStaticWorld() {
         return STATIC_WORLD;
     }
@@ -128,7 +127,7 @@ public class Knoten {
         return accessibilityChecker.isAccessible(this, newPosX, newPosY);
     }
 
-    public List<Knoten> expand(boolean isStateSearch, boolean noWait, IAccessibilityChecker accessibilityChecker) {
+    public List<Knoten> expand(boolean isStateSearch, boolean withWait, IAccessibilityChecker accessibilityChecker) {
         // Macht es einen Unterschied, wenn NEIGHBOUR_POS pro expand aufruf neu erzeugt wird? Ja
         List<Knoten> children = new LinkedList<>();
 
@@ -139,7 +138,7 @@ public class Knoten {
                         new Knoten(isStateSearch, this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        if (!noWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityChecker)) {
+        if (withWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityChecker)) {
             children.add(new Knoten(isStateSearch, this, posX, posY));
         }
 
@@ -218,6 +217,7 @@ public class Knoten {
                 && /*heuristicalValue() == ((Knoten) o).heuristicalValue() &&*/ Arrays.deepEquals(view, knoten.view);
     }
 
+    // region Getter und Setter
     public byte[][] getView() {
         return view;
     }

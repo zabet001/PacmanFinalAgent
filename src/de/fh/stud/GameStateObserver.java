@@ -21,7 +21,6 @@ public class GameStateObserver {
         gameState.setNewActionEffect(actionEffect);
         if (gameState.getNewActionEffect() == PacmanActionEffect.ATE_POWERPILL) {
             gameState.setPowerpillTimer(getPowerpillDuration());
-            System.out.println();
         }
         // IDEE: Wenn Geist gefressen: powerpillTimer auf 1 setzen, da Gefahr ab naechsten Respawn
         else if (gameState.getNewActionEffect() == PacmanActionEffect.ATE_GHOST

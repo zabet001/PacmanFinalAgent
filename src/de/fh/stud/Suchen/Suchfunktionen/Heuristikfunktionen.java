@@ -35,6 +35,10 @@ public class Heuristikfunktionen {
         return node -> Util.manhattan(node.getPosX(), node.getPosY(), goalX, goalY);
     }
 
+    public static IHeuristicFunction realDistanceToTarget(int goalX, int goalY) {
+        return node -> Felddistanzen.getDistance(goalX,goalY,node.getPosX(),node.getPosY());
+    }
+
     public static IHeuristicFunction sumDistanceToGhosts(List<GhostInfo> ghosts) {
         return node -> Felddistanzen.getMaxDistance() - Felddistanzen.Geisterdistanz.sumOfGhostDistances(node.getPosX(),
                                                                                                          node.getPosY(),

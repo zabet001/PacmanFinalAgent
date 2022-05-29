@@ -94,6 +94,8 @@ public class Zugangsfilter {
             // TODO: Wenn der Pacman in die Sackgasse geht aus der man nicht wieder raus kommen wird
             //  ABER alle Dots in derselben Sackgasse sind (können mit einer NICHT-Zustandssuche abgegrasen
             //  werden) ist das Feld save
+            if(false)
+                return true;
             return false;
 
         };

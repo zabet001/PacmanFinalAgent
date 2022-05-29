@@ -14,136 +14,153 @@ public class Suchszenario {
     private final IGoalPredicate goalPred;
     private final IHeuristicFunction heuristicFunc;
     private final ICallbackFunction[] callbackFuncs;
+    private final boolean stateProblem;
+    private final boolean withWaitAction;
 
-    private final boolean isStateProblem;
-    private boolean noWait;
+    public static final class SuchszenarioBuilder {
+        private IAccessibilityChecker accessCheck;
+        private IGoalPredicate goalPred;
+        private IHeuristicFunction heuristicFunc;
+        private ICallbackFunction[] callbackFuncs;
+        private boolean stateProblem = true;
+        private boolean withWaitAction = true;
+
+        private SuchszenarioBuilder setAccessCheck(IAccessibilityChecker accessCheck) {
+            this.accessCheck = accessCheck;
+            return this;
+        }
+
+        private SuchszenarioBuilder setGoalPred(IGoalPredicate goalPred) {
+            this.goalPred = goalPred;
+            return this;
+        }
+
+        private SuchszenarioBuilder setHeuristicFunc(IHeuristicFunction heuristicFunc) {
+            this.heuristicFunc = heuristicFunc;
+            return this;
+        }
+
+        private SuchszenarioBuilder setCallbackFuncs(ICallbackFunction... callbackFuncs) {
+            this.callbackFuncs = callbackFuncs;
+            return this;
+        }
+
+        private SuchszenarioBuilder setStateProblem(boolean stateProblem) {
+            this.stateProblem = stateProblem;
+            return this;
+        }
+
+        private SuchszenarioBuilder setWithWaitAction(boolean withWaitAction) {
+            this.withWaitAction = withWaitAction;
+            return this;
+        }
+
+        public Suchszenario build() {
+            if (accessCheck == null) {
+                throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
+            }
+            return new Suchszenario(this);
+        }
+    }
 
     // region Konstruktoren
+    private Suchszenario(SuchszenarioBuilder b) {
+        this.accessCheck = b.accessCheck;
+        this.goalPred = b.goalPred;
+        this.heuristicFunc = b.heuristicFunc;
+        this.callbackFuncs = b.callbackFuncs;
+
+        this.stateProblem = b.stateProblem;
+        this.withWaitAction = b.withWaitAction;
+    }
+
     public Suchszenario(IAccessibilityChecker accessCheck, IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
-        this(true, accessCheck, false, goalPred, heuristicFunc, (ICallbackFunction[]) null);
+        this(true, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
     }
 
-    public Suchszenario(boolean isStateProblem, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
                         IHeuristicFunction heuristicFunc) {
-        this(isStateProblem, accessCheck, false, goalPred, heuristicFunc, (ICallbackFunction[]) null);
+        this(stateProblem, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
     }
 
-    public Suchszenario(boolean isStateProblem, IAccessibilityChecker accessCheck, boolean noWait,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, boolean withWaitAction,
                         IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
-        this(isStateProblem, accessCheck, noWait, goalPred, heuristicFunc, (ICallbackFunction[]) null);
+        this(stateProblem, accessCheck, withWaitAction, goalPred, heuristicFunc, (ICallbackFunction[]) null);
 
     }
 
-    public Suchszenario(boolean isStateProblem, IAccessibilityChecker accessCheck, boolean noWait,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, boolean withWaitAction,
                         IGoalPredicate goalPred, IHeuristicFunction heuristicFunc, ICallbackFunction... callbackFuncs) {
-        this.isStateProblem = isStateProblem;
+        this.stateProblem = stateProblem;
         this.accessCheck = accessCheck;
-        this.noWait = noWait;
+        this.withWaitAction = withWaitAction;
         this.goalPred = goalPred;
         this.heuristicFunc = heuristicFunc;
         this.callbackFuncs = callbackFuncs;
     }
 
     //endregion
-    public static Suchszenario runAway(Zugangsfilter.AvoidMode avoidMode, boolean noWait, int startPosX,
-                                       int startPosY) {
-        return runAway(true, avoidMode, noWait, startPosX, startPosY);
+
+    public static Suchszenario runAway(Zugangsfilter.AvoidMode avoidMode, int startPosX, int startPosY) {
+        return new SuchszenarioBuilder()
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setGoalPred(Zielfunktionen.didAnAction(startPosX, startPosY))
+                .setHeuristicFunc(Heuristikfunktionen.distanceToCloserGhosts(GameStateObserver
+                                                                                     .getGameState()
+                                                                                     .getNewPercept()
+                                                                                     .getGhostInfos()))
+                .build();
     }
 
-    public static Suchszenario runAway(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode, boolean noWait,
-                                       int startPosX, int startPosY) {
-        return new Suchszenario(isStateProblem, Zugangsfilter.merge(Zugangsfilter.avoidThese(avoidMode)), noWait,
-                                Zielfunktionen.didAnAction(startPosX, startPosY),
-                                Heuristikfunktionen.distanceToCloserGhosts(GameStateObserver
-                                                                                   .getGameState()
-                                                                                   .getNewPercept()
-                                                                                   .getGhostInfos()));
-    }
-
-    /**
-     HINWEIS: Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
-     */
-    public static Suchszenario eatAllDots() {
-        return Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD);
+    public static Suchszenario eatAllDots(Zugangsfilter.AvoidMode avoidMode) {
+        return new SuchszenarioBuilder()
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setGoalPred(Zielfunktionen.allDotsEaten())
+                .setHeuristicFunc(Heuristikfunktionen.remainingDots())
+                .build();
     }
 
     public static Suchszenario eatNearestPowerpill(Zugangsfilter.AvoidMode avoidMode) {
-        return Suchszenario.eatNearestPowerpill(true, avoidMode);
+        return new SuchszenarioBuilder()
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setGoalPred(Zielfunktionen.powerpillEaten())
+                .build();
     }
 
-    public static Suchszenario eatNearestPowerpill(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode) {
-        return new Suchszenario(isStateProblem, Zugangsfilter.avoidThese(avoidMode), Zielfunktionen.powerpillEaten(),
-                                null);
-    }
-
-    /**
-     @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
-     dem Feld"
-     */
     public static Suchszenario eatNearestDot(Zugangsfilter.AvoidMode avoidMode) {
-        return Suchszenario.eatNearestDot(true, avoidMode);
+        return new SuchszenarioBuilder()
+                .setGoalPred(Zielfunktionen.dotEaten())
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setHeuristicFunc(Heuristikfunktionen.isDeadEndField())
+                .build();
     }
 
-    /**
-     @param isStateProblem - Zusatzinformationen, wie verbleibende Anzahl Dots
-     @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
-     dem Feld"
-     */
-    public static Suchszenario eatNearestDot(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode) {
-        return new Suchszenario(isStateProblem, Zugangsfilter.avoidThese(avoidMode),
-                                Zielfunktionen.dotEaten(isStateProblem), Heuristikfunktionen.isDeadEndField());
+    public static Suchszenario eatUpToNDots(int amount, int currentDotAmount, Zugangsfilter.AvoidMode avoidMode) {
+        return new SuchszenarioBuilder()
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setGoalPred(Zielfunktionen.amountOfDotsEaten(amount, currentDotAmount))
+                .setHeuristicFunc(Heuristikfunktionen.remainingDots())
+                .build();
     }
 
-    public static Suchszenario eatUpToNDots(int amount, int startingCnt, Zugangsfilter.AvoidMode avoidMode) {
-        return new Suchszenario(true, Zugangsfilter.avoidThese(avoidMode), true,
-                                Zielfunktionen.amountOfDotsEaten(amount, startingCnt),
-                                Heuristikfunktionen.combine(Heuristikfunktionen.remainingDots(),
-                                                            Heuristikfunktionen.isDeadEndField()));
+    public static Suchszenario reachDestination(Zugangsfilter.AvoidMode avoidMode, int goalX, int goalY) {
+        return new SuchszenarioBuilder()
+                .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
+                .setGoalPred(Zielfunktionen.reachedDestination(goalX, goalY))
+                .setHeuristicFunc(Heuristikfunktionen.manhattanToTarget(goalX, goalY))
+                .setStateProblem(false)
+                .setWithWaitAction(false)
+                .build();
     }
 
-    /**
-     @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
-     dem Feld"
-     */
-    public static Suchszenario eatAllDots(Zugangsfilter.AvoidMode avoidMode) {
-        return new Suchszenario(true, Zugangsfilter.avoidThese(avoidMode), true, Zielfunktionen.allDotsEaten(),
-                                Heuristikfunktionen.remainingDots());
+    public static Suchszenario locateDeadEndExit() {
+            return new SuchszenarioBuilder()
+                    .setStateProblem(false)
+                    .setWithWaitAction(false)
+                    .setAccessCheck(Zugangsfilter.noWall())
+                    .setGoalPred(node -> Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] == 0)
+                    .build();
     }
-
-    /**
-     HINWEIS: Felder vor Geister werden nicht betreten, es sei denn die Powerpille ist aktiv
-     */
-    public static Suchszenario findDestination(int goalX, int goalY) {
-        return Suchszenario.findDestination(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD, goalX, goalY);
-    }
-
-    /**
-     @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
-     dem Feld"
-     */
-    public static Suchszenario findDestination(Zugangsfilter.AvoidMode avoidMode, int goalX, int goalY) {
-        return Suchszenario.findDestination(true, avoidMode, goalX, goalY);
-    }
-
-    /**
-     @param isStateProblem - Zusatzinformationen, wie verbleibende Anzahl Dots
-     @param avoidMode - Filtern nach "Waenden" oder zusaetzlich "Geistern auf Feld" oder zusaetzlich "+ "Geister neben
-     dem Feld"
-     */
-    public static Suchszenario findDestination(boolean isStateProblem, Zugangsfilter.AvoidMode avoidMode, int goalX,
-                                               int goalY) {
-        return new Suchszenario(isStateProblem, Zugangsfilter.avoidThese(avoidMode),
-                                Zielfunktionen.reachedDestination(goalX, goalY),
-                                Heuristikfunktionen.manhattanToTarget(goalX, goalY));
-    }
-
-    public static Suchszenario locateDeadEndExit(byte[][] markedAsOneWays) {
-        IAccessibilityChecker noWallOrDeadEnd = Zugangsfilter.merge(Zugangsfilter.noWall(), (node, newPosX, newPosY) ->
-                markedAsOneWays[newPosX][newPosY] == 0);
-        return new Suchszenario(false, noWallOrDeadEnd, true, Zielfunktionen.minimumNeighbours(2, noWallOrDeadEnd),
-                                null);
-    }
-
     // region getter
 
     public IAccessibilityChecker getAccessCheck() {
@@ -163,15 +180,12 @@ public class Suchszenario {
     }
 
     public boolean isStateProblem() {
-        return isStateProblem;
+        return stateProblem;
     }
 
-    public boolean isNoWait() {
-        return noWait;
+    public boolean isWithWaitAction() {
+        return withWaitAction;
     }
 
-    public void setNoWait(boolean noWait) {
-        this.noWait = noWait;
-    }
     // endregion
 }

@@ -23,19 +23,14 @@ public class Zielfunktionen {
                                                                                                   .getView()[node.getPosX()][node.getPosY()]));
     }
 
-    public static IGoalPredicate dotEaten(boolean isStateSearch) {
-        if (isStateSearch) {
-            return node -> node.getPred() != null && node.getRemainingDots() < node
-                    .getPred()
-                    .getRemainingDots();
-        }
+    public static IGoalPredicate dotEaten() {
         return node -> node.getPred() != null && MyUtil.isDotType(MyUtil.byteToTile(node
                                                                                             .getPred()
                                                                                             .getView()[node.getPosX()][node.getPosY()]));
     }
 
-    public static IGoalPredicate amountOfDotsEaten(int amount, int startingCnt) {
-        return node -> node.getRemainingDots() == 0 || startingCnt - amount >= node.getRemainingDots();
+    public static IGoalPredicate amountOfDotsEaten(int amount, int currentDotAmount) {
+        return node -> node.getRemainingDots() == 0 || currentDotAmount - amount >= node.getRemainingDots();
     }
 
     public static IGoalPredicate allDotsEaten() {

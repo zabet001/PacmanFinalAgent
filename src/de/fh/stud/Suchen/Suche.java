@@ -17,65 +17,139 @@ import java.util.*;
 public class Suche {
 
     public static final int MAX_SOLUTION_LIMIT = Integer.MAX_VALUE;
-    private static final boolean SHOW_RESULTS = false;
-    private static final boolean PRINT_AVG_RUNTIME = false;
-
-    public static boolean searchRunning = false;
+    public static boolean searchExisting = false;
     public static List<Double> runTimes = new LinkedList<>();
 
-    // TODO: Heuristiken, Kosten, Goal etc. in Suche teilen
-    //  (z.B. Objekt Knoteninformationen -> Knoten (unidirektionale Assoziation)
+    public enum SearchStrategy {
+        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
+    }
+
+    private final boolean displayResults;
+    private final boolean printResults;
+
     private final boolean stateSearch;
+    private final boolean withWaitAction;
     private final IAccessibilityChecker accessCheck;
     private final IGoalPredicate goalPred;
     private final IHeuristicFunction heuristicFunc;
     private final ICallbackFunction[] callbackFuncs;
-    private boolean noWaitAction;
 
-    public Suche(Suchszenario searchScenario) {
-        this(searchScenario.isStateProblem(), searchScenario.getAccessCheck(), searchScenario.isNoWait(),
-             searchScenario.getGoalPred(), searchScenario.getHeuristicFunc(), searchScenario.getCallbackFuncs());
+    public static final class SucheBuilder {
+        private boolean displayResults = false;
+        private boolean printResults = false;
+        private boolean stateSearch = true;
+        private boolean withWaitAction = true;
+        private IAccessibilityChecker accessCheck;
+        private IGoalPredicate goalPred;
+        private IHeuristicFunction heuristicFunc;
+        private ICallbackFunction[] callbackFuncs;
+
+        public SucheBuilder() {}
+
+        public SucheBuilder(Suchszenario scenario) {
+            this.stateSearch = scenario.isStateProblem();
+            this.accessCheck = scenario.getAccessCheck();
+            this.goalPred = scenario.getGoalPred();
+            this.heuristicFunc = scenario.getHeuristicFunc();
+            this.callbackFuncs = scenario.getCallbackFuncs();
+        }
+
+        public SucheBuilder setDisplayResults(boolean displayResults) {
+            this.displayResults = displayResults;
+            return this;
+        }
+
+        public SucheBuilder setPrintResults(boolean printResults) {
+            this.printResults = printResults;
+            return this;
+
+        }
+
+        public SucheBuilder setStateSearch(boolean stateSearch) {
+            this.stateSearch = stateSearch;
+            return this;
+
+        }
+
+        public SucheBuilder setWithWaitAction(boolean withWaitAction) {
+            this.withWaitAction = withWaitAction;
+            return this;
+
+        }
+
+        public SucheBuilder setAccessCheck(IAccessibilityChecker accessCheck) {
+            this.accessCheck = accessCheck;
+            return this;
+
+        }
+
+        public SucheBuilder setGoalPred(IGoalPredicate goalPred) {
+            this.goalPred = goalPred;
+            return this;
+
+        }
+
+        public SucheBuilder setHeuristicFunc(IHeuristicFunction heuristicFunc) {
+            this.heuristicFunc = heuristicFunc;
+            return this;
+
+        }
+
+        public SucheBuilder setCallbackFuncs(ICallbackFunction... callbackFuncs) {
+            this.callbackFuncs = callbackFuncs;
+            return this;
+
+        }
+
+        public SucheBuilder additionalCallbackFuncs(ICallbackFunction... callbackFuncs) {
+            this.callbackFuncs = MyUtil.mergeArrays(this.callbackFuncs, callbackFuncs);
+            return this;
+        }
+
+        public Suche createSuche() {
+            if (accessCheck == null) {
+                throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
+            }
+            if (goalPred == null) {
+                goalPred = node -> false;
+            }
+            if (heuristicFunc == null) {
+                heuristicFunc = node -> 0;
+            }
+            if (callbackFuncs == null) {
+                callbackFuncs = new ICallbackFunction[]{expCand -> {}};
+            }
+
+            return new Suche(this);
+        }
     }
 
-    public Suche(Suchszenario searchScenario, ICallbackFunction... callbackFunctions) {
-        this(searchScenario.isStateProblem(), searchScenario.getAccessCheck(), searchScenario.isNoWait(),
-             searchScenario.getGoalPred(), searchScenario.getHeuristicFunc(),
-             MyUtil.mergeArrays(searchScenario.getCallbackFuncs(), callbackFunctions));
-    }
-
-    public Suche(boolean isStateSearch, IAccessibilityChecker accessCheck, boolean noWaitAction,
-                 IGoalPredicate goalPred, IHeuristicFunction heuristicFunc, ICallbackFunction... callbackFunctions) {
-        if (Suche.searchRunning) {
+    public Suche(SucheBuilder b) {
+        if (Suche.searchExisting) {
             System.err.println("WARNUNG: Eine Suche laeuft bereits!");
         }
         else {
-            Suche.searchRunning = true;
+            Suche.searchExisting = true;
         }
+        this.displayResults = b.displayResults;
+        this.printResults = b.printResults;
 
-        this.noWaitAction = noWaitAction;
-        this.stateSearch = isStateSearch;
-        this.accessCheck = accessCheck;
-        this.goalPred = goalPred != null ? goalPred : node -> false;
-        this.heuristicFunc = heuristicFunc != null ? heuristicFunc : node -> 0;
-        this.callbackFuncs = callbackFunctions;
+        this.stateSearch = b.stateSearch;
+        this.withWaitAction = b.withWaitAction;
+
+        this.accessCheck = b.accessCheck;
+        this.goalPred = b.goalPred;
+        this.heuristicFunc = b.heuristicFunc;
+        this.callbackFuncs = b.callbackFuncs;
     }
+
 
     public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy) {
-        return start(world, posX, posY, strategy, SHOW_RESULTS);
-    }
-
-    public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, boolean showResults) {
-        List<Knoten> ret = start(world, posX, posY, strategy, 1, showResults);
+        List<Knoten> ret = start(world, posX, posY, strategy, 1);
         return ret.size() > 0 ? ret.get(0) : null;
     }
 
-    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy,
-                              int solutionLimit) {
-        return start(world, posX, posY, strategy, solutionLimit, SHOW_RESULTS);
-    }
-
-    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit,
-                              boolean showResults) {
+    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit) {
         Knoten rootNode = Knoten.generateRoot(stateSearch, world, posX, posY);
 
         long startTime = System.nanoTime();
@@ -88,22 +162,17 @@ public class Suche {
                                                                                                       world),
                                                                                               solutionLimit, startTime);
 
-        if (PRINT_AVG_RUNTIME) {
-            double elapsedTime = searchResult
-                    .getValue()
-                    .get("Rechenzeit in ms.");
-            runTimes.add(elapsedTime);
-            MyUtil.println(String.format("Laufzeit fuer Durchlauf Nr. %d: %.2f ms.\n", runTimes.size(), elapsedTime));
-            MyUtil.println(String.format("Durchschnittliche. Laufzeit: %.2f ms.", runTimes
-                    .stream()
-                    .reduce(0.0, Double::sum) / runTimes.size()));
-            MyUtil.println("...");
+        if (printResults) {
+            System.out.println(debugInfos(strategy, searchResult));
         }
-        if (showResults) {
-            printDebugInfos(strategy, searchResult);
+        if (displayResults) {
+            JFrame jf = new JFrame();
+            jf.setAlwaysOnTop(true);
+            JOptionPane.showMessageDialog(jf, debugInfos(strategy, searchResult));
+
         }
 
-        Suche.searchRunning = false;
+        Suche.searchExisting = false;
         return searchResult.getKey();
     }
 
@@ -127,7 +196,7 @@ public class Suche {
                 closedList.add(expCand);
                 expCand.executeCallbacks(callbackFuncs);
                 expCand
-                        .expand(stateSearch, noWaitAction, accessCheck)
+                        .expand(stateSearch, withWaitAction, accessCheck)
                         .forEach(openList::add);//(openList::add);
             }
         }
@@ -147,8 +216,8 @@ public class Suche {
         }};
     }
 
-    private void printDebugInfos(SearchStrategy strategy,
-                                 AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> result) {
+    private String debugInfos(SearchStrategy strategy,
+                              AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> result) {
         StringBuilder report = new StringBuilder(String.format("""
                                                                        Ziel wurde %sgefunden
                                                                        Suchalgorithmus: %s
@@ -169,10 +238,7 @@ public class Suche {
 
             report.append(String.format("%s: %s\n", info_value.getKey(), val));
         }
-        MyUtil.println(report.toString());
-        JFrame jf = new JFrame();
-        jf.setAlwaysOnTop(true);
-        JOptionPane.showMessageDialog(jf, report.toString());
+        return report.toString();
     }
 
     public boolean isStateSearch() {
@@ -195,15 +261,8 @@ public class Suche {
         return callbackFuncs;
     }
 
-    public boolean isNoWaitAction() {
-        return noWaitAction;
+    public boolean isWithWaitAction() {
+        return withWaitAction;
     }
 
-    public void setNoWaitAction(boolean noWaitAction) {
-        this.noWaitAction = noWaitAction;
-    }
-
-    public enum SearchStrategy {
-        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
-    }
 }
