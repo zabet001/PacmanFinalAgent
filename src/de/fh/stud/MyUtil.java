@@ -149,11 +149,24 @@ public class MyUtil {
         return false;
     }
 
-    public static short countDots(PacmanTileType[][] view) {
+    public static short countOccurrences(byte[][] view,
+                                         java.util.function.Function<Byte, Boolean> occurrenceIdentifier) {
         short cnt = 0;
-        for (PacmanTileType[] rowVals : view) {
+        for (int row = 0; row < view.length; row++) {
             for (int col = 0; col < view[0].length; col++) {
-                if (isDotType(rowVals[col])) {
+                if (occurrenceIdentifier.apply(view[row][col])) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    public static <T> short countOccurrences(T[][] view, java.util.function.Function<T, Boolean> occurrenceIdentifier) {
+        short cnt = 0;
+        for (int row = 0; row < view.length; row++) {
+            for (int col = 0; col < view[0].length; col++) {
+                if (occurrenceIdentifier.apply(view[row][col])) {
                     cnt++;
                 }
             }

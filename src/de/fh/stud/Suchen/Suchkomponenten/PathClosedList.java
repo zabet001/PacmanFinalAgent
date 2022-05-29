@@ -1,12 +1,10 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
-import de.fh.pacman.enums.PacmanTileType;
-
 public class PathClosedList extends ClosedList {
     int size;
     boolean[][] closedList;
 
-    public PathClosedList(PacmanTileType[][] world) {
+    public PathClosedList(byte[][] world) {
         closedList = new boolean[world.length][world[0].length];
     }
 

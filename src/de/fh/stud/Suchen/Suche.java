@@ -143,13 +143,22 @@ public class Suche {
         this.callbackFuncs = b.callbackFuncs;
     }
 
-
     public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy) {
         List<Knoten> ret = start(world, posX, posY, strategy, 1);
         return ret.size() > 0 ? ret.get(0) : null;
     }
 
-    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit) {
+    public Knoten start(byte[][] world, int posX, int posY, SearchStrategy strategy) {
+        List<Knoten> ret = start(world, posX, posY, strategy, 1);
+        return ret.size() > 0 ? ret.get(0) : null;
+    }
+
+    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy,
+                              int solutionLimit) {
+        return start(MyUtil.createByteView(world), posX, posY, strategy, solutionLimit);
+    }
+
+    public List<Knoten> start(byte[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit) {
         Knoten rootNode = Knoten.generateRoot(stateSearch, world, posX, posY);
 
         long startTime = System.nanoTime();

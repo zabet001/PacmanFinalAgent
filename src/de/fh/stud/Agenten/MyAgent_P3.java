@@ -10,8 +10,6 @@ import de.fh.pacman.enums.PacmanActionEffect;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
-import de.fh.stud.Suchen.Felddistanzen;
-import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
@@ -78,7 +76,7 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
         GameStateObserver.reset();
         GameStateObserver
                 .getGameState()
-                .setRemainingDots(MyUtil.countDots(world));
+                .setRemainingDots(MyUtil.countOccurrences(world, MyUtil::isDotType));
 
 //        Sackgassen.initDeadEndDepth(world);
 //        Felddistanzen.initDistances(world);

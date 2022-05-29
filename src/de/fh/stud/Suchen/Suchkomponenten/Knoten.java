@@ -18,13 +18,31 @@ import java.util.Objects;
 public class Knoten {
 
     private static final short COST_LIMIT = 1000;
-    private static PacmanTileType[][] STATIC_WORLD;
     private final Knoten pred;
-    private final byte[][] view;
+    private byte[][] view;
     private final short cost;
-    private final short remainingDots;
+    private short remainingDots;
     private final byte posX, posY;
     private final byte powerpillTimer; // != 0: unverwundbar
+
+    public static Knoten generateRoot(boolean isStateSearch, byte[][] world, int posX, int posY) {
+        // Das Spawnfeld fuer die Suche ignorieren
+        byte zw = world[posX][posY];
+        world[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
+
+        Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
+        ret.view = world;
+        ret.remainingDots = MyUtil.countOccurrences(world, field -> MyUtil.isDotType(MyUtil.byteToTile(field)));
+
+        // Spawnfeld wieder zuruecksetzen
+        world[posX][posY] = zw;
+
+        return ret;
+    }
+
+    public static Knoten generateRoot(boolean isStateSearch, PacmanTileType[][] world, int posX, int posY) {
+        return generateRoot(isStateSearch, MyUtil.createByteView(world), posX, posY);
+    }
 
     private Knoten(boolean isStateSearch, byte posX, byte posY) {
         this(isStateSearch, null, posX, posY);
@@ -37,10 +55,9 @@ public class Knoten {
 
         if (pred == null) {
             // Wurzelknoten
-            this.view = MyUtil.createByteView(STATIC_WORLD);
-
+            this.view = null;
+            this.remainingDots = 0;
             this.cost = 0;
-            this.remainingDots = MyUtil.countDots(STATIC_WORLD);
             this.powerpillTimer = isStateSearch ? GameStateObserver
                     .getGameState()
                     .getPowerpillTimer() : 0;
@@ -54,23 +71,8 @@ public class Knoten {
         }
 
     }
-
     // TODO Idee: Zusatzinformationen fuer Knoten (dotsEaten, powerPillTimer etc.) in Extra-Objekt speichernrn?
     //  (vllt. z.B. Objekt Zusatzinformationen -> Knoten (unidirektionale Assoziation)
-    public static Knoten generateRoot(boolean isStateSearch, PacmanTileType[][] world, int posX, int posY) {
-        Knoten.STATIC_WORLD = world;
-        // Das Spawnfeld fuer die Suche ignorieren
-        PacmanTileType zw = world[posX][posY];
-        world[posX][posY] = PacmanTileType.EMPTY;
-        Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
-        // Spawnfeld wieder zuruecksetzen
-        world[posX][posY] = zw;
-        return ret;
-    }
-
-    public static PacmanTileType[][] getStaticWorld() {
-        return STATIC_WORLD;
-    }
 
     private short calcRemainingDots(boolean isStateSearch, Knoten pred, byte posX, byte posY) {
         if (isStateSearch && MyUtil.isDotType(MyUtil.byteToTile(pred.view[posX][posY]))) {

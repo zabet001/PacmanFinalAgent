@@ -139,7 +139,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         GameStateObserver.reset();
         GameStateObserver
                 .getGameState()
-                .setRemainingDots(MyUtil.countDots(world));
+                .setRemainingDots(MyUtil.countOccurrences(world, MyUtil::isDotType));
 
         Sackgassen.initDeadEndDepth(world);
         Felddistanzen.initDistances(world);
