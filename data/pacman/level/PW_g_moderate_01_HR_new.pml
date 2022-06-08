@@ -1,19 +1,19 @@
 V3.0 14 14
-PW_g_moderate_01_HR_old.pml
+PW_g_moderate_01_HR_new.pml
 W W W W W W W W W W W W W W 
-W PP D D D D D D D E D D PP W 
-W D W D W W D W W D W W D W 
+W PP D D D D D D D D D D D W 
+W D W D W W W W W D W PP D W 
 W D W D W W D D D D W W D W 
 W D W D W W W W W W W W D W 
 W D D D D E D D D D D D D W 
+W D W W D W W D W W D W E W 
 W D W W D W W D W W D W D W 
-W D W W D W W D W W D W D W 
-W D W D D W W D D D D W D W 
+W E W D D W W D D D D W D W 
 W D W W W W W D W W D W D W 
-W D D W W E D D W W D W D W 
+W D D W W D D D W W D W D W 
 W D W D W D W W W W D W D W 
 W PP D D D D D D D D D D PP W 
 W W W W W W W W W W W W W W 
 sp:5,5,,
-sp:5,10,GHOST_HUNTER,
-sp:9,1,GHOST_RANDOM,
+sp:1,8,GHOST_HUNTER,direction:EAST
+sp:12,6,GHOST_RANDOM,direction:EAST

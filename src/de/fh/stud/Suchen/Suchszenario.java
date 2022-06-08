@@ -1,16 +1,16 @@
 package de.fh.stud.Suchen;
 
 import de.fh.stud.GameStateObserver;
-import de.fh.stud.Suchen.Suchfunktionen.Heuristikfunktionen;
-import de.fh.stud.Suchen.Suchfunktionen.Zielfunktionen;
-import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
-import de.fh.stud.interfaces.IAccessibilityChecker;
-import de.fh.stud.interfaces.ICallbackFunction;
-import de.fh.stud.interfaces.IGoalPredicate;
-import de.fh.stud.interfaces.IHeuristicFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Heuristikfunktionen;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zielfunktionen;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.ICallbackFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IGoalPredicate;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 public class Suchszenario {
-    private final IAccessibilityChecker accessCheck;
+    private final IAccessibilityChecker[] accessCheck;
     private final IGoalPredicate goalPred;
     private final IHeuristicFunction heuristicFunc;
     private final ICallbackFunction[] callbackFuncs;
@@ -18,14 +18,14 @@ public class Suchszenario {
     private final boolean withWaitAction;
 
     public static final class SuchszenarioBuilder {
-        private IAccessibilityChecker accessCheck;
+        private IAccessibilityChecker[] accessCheck;
         private IGoalPredicate goalPred;
         private IHeuristicFunction heuristicFunc;
         private ICallbackFunction[] callbackFuncs;
         private boolean stateProblem = true;
         private boolean withWaitAction = true;
 
-        private SuchszenarioBuilder setAccessCheck(IAccessibilityChecker accessCheck) {
+        private SuchszenarioBuilder setAccessCheck(IAccessibilityChecker... accessCheck) {
             this.accessCheck = accessCheck;
             return this;
         }
@@ -74,22 +74,22 @@ public class Suchszenario {
         this.withWaitAction = b.withWaitAction;
     }
 
-    public Suchszenario(IAccessibilityChecker accessCheck, IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
+    public Suchszenario(IAccessibilityChecker[] accessCheck, IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
         this(true, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
     }
 
-    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, IGoalPredicate goalPred,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, IGoalPredicate goalPred,
                         IHeuristicFunction heuristicFunc) {
         this(stateProblem, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
     }
 
-    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, boolean withWaitAction,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, boolean withWaitAction,
                         IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
         this(stateProblem, accessCheck, withWaitAction, goalPred, heuristicFunc, (ICallbackFunction[]) null);
 
     }
 
-    public Suchszenario(boolean stateProblem, IAccessibilityChecker accessCheck, boolean withWaitAction,
+    public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, boolean withWaitAction,
                         IGoalPredicate goalPred, IHeuristicFunction heuristicFunc, ICallbackFunction... callbackFuncs) {
         this.stateProblem = stateProblem;
         this.accessCheck = accessCheck;
@@ -120,6 +120,7 @@ public class Suchszenario {
                 .build();
     }
 
+
     public static Suchszenario eatNearestPowerpill(Zugangsfilter.AvoidMode avoidMode) {
         return new SuchszenarioBuilder()
                 .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
@@ -131,7 +132,7 @@ public class Suchszenario {
         return new SuchszenarioBuilder()
                 .setGoalPred(Zielfunktionen.dotEaten())
                 .setAccessCheck(Zugangsfilter.avoidThese(avoidMode))
-                .setHeuristicFunc(Heuristikfunktionen.isDeadEndField())
+                // .setHeuristicFunc(Heuristikfunktionen.isDeadEndField())
                 .build();
     }
 
@@ -154,16 +155,16 @@ public class Suchszenario {
     }
 
     public static Suchszenario locateDeadEndExit() {
-            return new SuchszenarioBuilder()
-                    .setStateProblem(false)
-                    .setWithWaitAction(false)
-                    .setAccessCheck(Zugangsfilter.noWall())
-                    .setGoalPred(node -> Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] == 0)
-                    .build();
+        return new SuchszenarioBuilder()
+                .setStateProblem(false)
+                .setWithWaitAction(false)
+                .setAccessCheck(Zugangsfilter.noWall())
+                .setGoalPred(node -> Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] == 0)
+                .build();
     }
     // region getter
 
-    public IAccessibilityChecker getAccessCheck() {
+    public IAccessibilityChecker[] getAccessCheck() {
         return accessCheck;
     }
 

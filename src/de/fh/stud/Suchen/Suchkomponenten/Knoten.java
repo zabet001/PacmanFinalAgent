@@ -5,10 +5,10 @@ import de.fh.pacman.enums.PacmanAction;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
-import de.fh.stud.interfaces.IAccessibilityChecker;
-import de.fh.stud.interfaces.ICallbackFunction;
-import de.fh.stud.interfaces.IGoalPredicate;
-import de.fh.stud.interfaces.IHeuristicFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.ICallbackFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IGoalPredicate;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -31,7 +31,7 @@ public class Knoten {
         world[posX][posY] = MyUtil.tileToByte(PacmanTileType.EMPTY);
 
         Knoten ret = new Knoten(isStateSearch, (byte) posX, (byte) posY);
-        ret.view = world;
+        ret.view = MyUtil.copyView(world);
         ret.remainingDots = MyUtil.countOccurrences(world, field -> MyUtil.isDotType(MyUtil.byteToTile(field)));
 
         // Spawnfeld wieder zuruecksetzen
@@ -114,33 +114,37 @@ public class Knoten {
         return newView;
     }
 
-    public int nodeNeighbourCnt(IAccessibilityChecker accessibilityChecker) {
+    public int nodeNeighbourCnt(IAccessibilityChecker[] accessibilityCheckers) {
         int neighbourCnt = 0;
         for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
             // if (view[posX + neighbour[0]][posY + neighbour[1]] != PacmanTileType.WALL) {
-            if (accessibilityChecker.isAccessible(this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]))) {
+            if (isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),accessibilityCheckers)) {
                 neighbourCnt++;
             }
         }
         return neighbourCnt;
     }
 
-    public boolean isPassable(byte newPosX, byte newPosY, IAccessibilityChecker accessibilityChecker) {
-        return accessibilityChecker.isAccessible(this, newPosX, newPosY);
+    public boolean isPassable(byte newPosX, byte newPosY, IAccessibilityChecker[] accessibilityCheckers) {
+        for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
+            if (!accessibilityChecker.isAccessible(this, newPosX, newPosY))
+                return false;
+        }
+        return true;
     }
 
-    public List<Knoten> expand(boolean isStateSearch, boolean withWait, IAccessibilityChecker accessibilityChecker) {
+    public List<Knoten> expand(boolean isStateSearch, boolean withWait, IAccessibilityChecker[] accessibilityCheckers) {
         // Macht es einen Unterschied, wenn NEIGHBOUR_POS pro expand aufruf neu erzeugt wird? Ja
         List<Knoten> children = new LinkedList<>();
 
         for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
             if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),
-                                                accessibilityChecker)) {
+                                                accessibilityCheckers)) {
                 children.add(
                         new Knoten(isStateSearch, this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
             }
         }
-        if (withWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityChecker)) {
+        if (withWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityCheckers)) {
             children.add(new Knoten(isStateSearch, this, posX, posY));
         }
 

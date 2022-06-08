@@ -1,4 +1,4 @@
-package de.fh.stud.Suchen.Suchfunktionen;
+package de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen;
 
 import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanTileType;
@@ -6,21 +6,8 @@ import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
-import de.fh.stud.interfaces.IAccessibilityChecker;
 
 public class Zugangsfilter {
-
-    public static IAccessibilityChecker merge(IAccessibilityChecker... accessibilityCheckers) {
-        return (node, newPosX, newPosY) -> {
-            for (IAccessibilityChecker accessibilityChecker : accessibilityCheckers) {
-                if (!accessibilityChecker.isAccessible(node, newPosX, newPosY)) {
-                    return false;
-                }
-            }
-            return true;
-        };
-    }
-
     public static IAccessibilityChecker avoidThese(Zugangsfilter.AvoidMode avoidMode) {
         return switch (avoidMode) {
             case ONLY_WALLS -> Zugangsfilter.noWall();
@@ -41,23 +28,28 @@ public class Zugangsfilter {
 
     public static IAccessibilityChecker nonDangerousEnvironment() {
         return (node, newPosX, newPosY) -> {
+            // Ist das Feld ueberhaupt betretbar?
             if (!nonDangerousField().isAccessible(node, newPosX, newPosY)) {
                 return false;
             }
+
+            // Powerpille: Unverwundbarkeit (Wenn Powerpille zu tief in Sackgasse ablaeuft: Koennte Vllt. eingesperrt sein)
             if (node.getPowerpillTimer() != 0) {
                 return true;
             }
-            if (node.getRemainingDots() == 1
-                    && MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.DOT) {
-                return true;
-            }
+
+            // Auf Powerpill gehen -> Unverwundbar
             if (MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.POWERPILL) {
                 return true;
             }
 
-            // TODO: Pacman stirbt, wenn der Ghost wieder respawnt und trotz aktiver Pille den Pacman schlaegt
-            //  -> Man muesste den Spawnpoint des Ghosts finden, und der Ghost von dort aus ist dann gefaehrlich
-            //  (was zu viel Arbeit abverlangt)
+            // Letzten Dot gefressen: Spiel gewonnen
+            if (node.getRemainingDots() == 1
+                    && MyUtil.byteToTile(node.getView()[newPosX][newPosY]) == PacmanTileType.DOT) {
+                return true;
+            }
+
+            // Geist neben dem Feld? Sehr wahrscheinlicher Tod
             if (MyUtil.ghostNextToPos(newPosX, newPosY, GameStateObserver
                     .getGameState()
                     .getNewPercept()
@@ -65,14 +57,12 @@ public class Zugangsfilter {
                 return false;
             }
 
-            // TODO: Entfernen wenn die Ueberpruefung nach alle Dots auf einmal essbar eingebaut
-            if (node.getRemainingDots() == 1) {
-                return true;
-            }
+            // Keine Sackgasse: Sicher (bezieht nicht "dynamische Geistersackgassen" ein)
             if (Sackgassen.deadEndDepth[newPosX][newPosY] <= 0) {
                 return true;
             }
 
+            // Sicher, wenn der Pacman rechtzeitig aus der Sackgasse wieder raus kann
             if (Felddistanzen.Geisterdistanz.minimumGhostDistance(Sackgassen.deadEndEntry[newPosX][newPosY].x,
                                                                   Sackgassen.deadEndEntry[newPosX][newPosY].y,
                                                                   GameStateObserver
@@ -82,21 +72,14 @@ public class Zugangsfilter {
                     > 1 + Sackgassen.deadEndDepth[newPosX][newPosY]) {
                 return true;
             }
-            // region Alte Version der Sackgassenpruefung (evtl. bessere Winrate?)
-/*            if (Felddistanzen.Geisterdistanz.minimumGhostDistance(node.getPosX(), node.getPosY(), GameStateObserver
-                    .getGameState()
-                    .getNewPercept()
-                    .getGhostInfos()) > 2 * Sackgassen.deadEndDepth[newPosX][newPosY]) {
-                return true;
-            }*/
-            // endregion
 
-            // TODO: Wenn der Pacman in die Sackgasse geht aus der man nicht wieder raus kommen wird
-            //  ABER alle Dots in derselben Sackgasse sind (können mit einer NICHT-Zustandssuche abgegrasen
-            //  werden) ist das Feld save
-            if(false)
+            // Wenn alle verbleibenden Dots in dieser Sackgasse sind: Sicher (gilt nicht fuer verzweigte Sackgassen)
+            if (Sackgassen.allDotsInThisDeadEnd(node.getView(), newPosX, newPosY)) {
                 return true;
+            }
             return false;
+            // Idee fuer verzweigte Sackgassen: schauen, ob man alle Dots in dieser Sackgasse so fressen koennte
+            // return Sackgassen.canEatAllDotsInOneGo(node.getView(), newPosX, newPosY);
 
         };
     }

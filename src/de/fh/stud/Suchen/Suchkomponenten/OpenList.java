@@ -1,7 +1,7 @@
 package de.fh.stud.Suchen.Suchkomponenten;
 
 import de.fh.stud.Suchen.Suche;
-import de.fh.stud.interfaces.IHeuristicFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 public abstract class OpenList {
     protected Suche.SearchStrategy searchStrategy;

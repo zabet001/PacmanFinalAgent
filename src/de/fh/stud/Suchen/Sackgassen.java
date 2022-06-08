@@ -3,10 +3,10 @@ package de.fh.stud.Suchen;
 import de.fh.kiServer.util.Vector2;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.MyUtil;
-import de.fh.stud.Suchen.Suchfunktionen.CallbackFunktionen;
-import de.fh.stud.Suchen.Suchfunktionen.Zielfunktionen;
-import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.CallbackFunktionen;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zielfunktionen;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
 
 import java.util.AbstractMap;
 import java.util.LinkedList;
@@ -26,7 +26,7 @@ public class Sackgassen {
         deadEndEntry = new Vector2[world.length][world[0].length];
 
         // Schritt 1: Alle Sackgassenenden ausfindig machen
-        /** Tupel: (Sackgassenende,Vorgaenger), um spaterer das erste Feld in der Sackgasse wiederzufinden*/
+        /* Tupel: (Sackgassenende,Vorgaenger), um spaterer das erste Feld in der Sackgasse wiederzufinden*/
         List<AbstractMap.SimpleEntry<Vector2, Vector2>> oneWays = oneWayEndsFirstOrder(world);
 
         /* Schritt 2: Fuer alle Sackgassen: Anfangspos suchen und fuer Endpos ersetzen, dabei CALLBACK: ALLE
@@ -102,18 +102,16 @@ public class Sackgassen {
      */
     private static AbstractMap.SimpleEntry<Vector2, Vector2> locateStartOfOneWay(PacmanTileType[][] world, int posX,
                                                                                  int posY) {
-
         Suche oneWayStartSearch = new Suche.SucheBuilder()
                 // Besuchte Sackgassen mit -1 markieren
                 .setCallbackFuncs(CallbackFunktionen.setVisitedValue(deadEndDepth, ((byte) -1)))
                 // Besuchte Sackgassen sollen nicht erneut betreten werden
-                .setAccessCheck(Zugangsfilter.merge(Zugangsfilter.noWall(),
-                                                    (node, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY] == 0))
+                .setAccessChecks(Zugangsfilter.noWall(),
+                                 (node, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY] == 0)
                 // Andere Sackgassen sollen als Waende betrachtet werden
-                .setGoalPred(Zielfunktionen.minimumNeighbours(2, Zugangsfilter.merge(Zugangsfilter.noWall(),
-                                                                                     (node, newPosX, newPosY) ->
-                                                                                             deadEndDepth[newPosX][newPosY]
-                                                                                                     == 0)))
+                .setGoalPred(Zielfunktionen.minimumNeighbours(2, Zugangsfilter.noWall(),
+                                                              (node, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY]
+                                                                      == 0))
                 .setStateSearch(false)
                 .setWithWaitAction(false)
                 .createSuche();
@@ -137,12 +135,40 @@ public class Sackgassen {
         Suche writeDepths = new Suche.SucheBuilder()
                 .setStateSearch(false)
                 .setWithWaitAction(false)
-                .setAccessCheck(Zugangsfilter.merge(Zugangsfilter.noWall(), Zugangsfilter.excludePositions(oneWayGate)))
+                .setAccessChecks(Zugangsfilter.noWall(), Zugangsfilter.excludePositions(oneWayGate))
                 .setCallbackFuncs(
                         expCand -> deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (expCand.getCost() + 1),
                         expCand -> deadEndEntry[expCand.getPosX()][expCand.getPosY()] = oneWayGate)
                 .createSuche();
         writeDepths.start(world, oneWayEntry.x, oneWayEntry.y, Suche.SearchStrategy.DEPTH_FIRST);
 
+    }
+
+    public static boolean allDotsInThisDeadEnd(byte[][] world, byte posX, byte posY) {
+        if (Sackgassen.deadEndDepth[posX][posY] <= 0) {
+            return false;
+        }
+        return new Suche.SucheBuilder(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.ONLY_WALLS))
+                .setAccessChecks(Zugangsfilter.noWall(), Zugangsfilter.excludePositions(deadEndEntry[posX][posY]))
+                .setWithWaitAction(false)
+                .createSuche()
+                .start(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
+    }
+
+    public static boolean canEatAllDotsInOneGo(byte[][] world, byte posX, byte posY) {
+        return new Suche.SucheBuilder(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.ONLY_WALLS))
+                .setAccessChecks(Zugangsfilter.noWall(), (node, newPosX, newPosY) -> {
+                    Knoten zw = node;
+                    while (zw.getPred() != null) {
+                        zw = zw.getPred();
+                        if (newPosX == zw.getPosX() && newPosY == zw.getPosY()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .setWithWaitAction(false)
+                .createSuche()
+                .start(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
     }
 }

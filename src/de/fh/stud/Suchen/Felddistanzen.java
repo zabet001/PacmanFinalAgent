@@ -2,8 +2,8 @@ package de.fh.stud.Suchen;
 
 import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Suchen.Suchfunktionen.CallbackFunktionen;
-import de.fh.stud.Suchen.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.CallbackFunktionen;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,7 +41,7 @@ public class Felddistanzen {
         Suche writeDistances = new Suche.SucheBuilder()
                 .setStateSearch(false)
                 .setWithWaitAction(false)
-                .setAccessCheck(Zugangsfilter.noWall())
+                .setAccessChecks(Zugangsfilter.noWall())
                 .setCallbackFuncs(CallbackFunktionen.saveStepCost(distancesForThisPos),
                                   expCand -> callback.accept(expCand.getCost()))
                 .createSuche();

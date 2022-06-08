@@ -1,9 +1,6 @@
-package de.fh.stud.Suchen.Suchfunktionen;
+package de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen;
 
 import de.fh.kiServer.util.Vector2;
-import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Suchen.Suchkomponenten.Knoten;
-import de.fh.stud.interfaces.ICallbackFunction;
 
 import java.util.List;
 

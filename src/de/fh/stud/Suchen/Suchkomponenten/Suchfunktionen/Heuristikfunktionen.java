@@ -1,11 +1,10 @@
-package de.fh.stud.Suchen.Suchfunktionen;
+package de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen;
 
 import de.fh.kiServer.util.Util;
 import de.fh.pacman.GhostInfo;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
-import de.fh.stud.interfaces.IHeuristicFunction;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,7 +35,7 @@ public class Heuristikfunktionen {
     }
 
     public static IHeuristicFunction realDistanceToTarget(int goalX, int goalY) {
-        return node -> Felddistanzen.getDistance(goalX,goalY,node.getPosX(),node.getPosY());
+        return node -> Felddistanzen.getDistance(goalX, goalY, node.getPosX(), node.getPosY());
     }
 
     public static IHeuristicFunction sumDistanceToGhosts(List<GhostInfo> ghosts) {
@@ -57,13 +56,13 @@ public class Heuristikfunktionen {
             // Aufschieben um n Ziffern (n ist die Anzahl Ziffern der maximalen Distanz)
             final byte maxDistanceDigitCnt = (byte) (Math.log10(Felddistanzen.getMaxDistance()) + 1);
             for (short dist : ghostDist) {
-                ret *= Math.pow(10,maxDistanceDigitCnt);
+                ret *= Math.pow(10, maxDistanceDigitCnt);
                 ret += Felddistanzen.getMaxDistance() - dist;
             }
 
-            // TODO: Unschön, fixen (Pacman sollte nicht in Sackgassen reinlaufen, aber aus Sackgassen rauslaufen)
+            // (Pacman soll nicht in Sackgassen reinlaufen, aber aus Sackgassen rauslaufen) TODO: Unschön, fixen!!!
             if (Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] != 0) {
-                ret *= 100;
+                ret *= 100*Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()];
             }
 
             return ret;

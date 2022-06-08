@@ -1,4 +1,4 @@
-package de.fh.stud.interfaces;
+package de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen;
 
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 

@@ -6,10 +6,10 @@ import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Suchkomponenten.ClosedList;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.Suchen.Suchkomponenten.OpenList;
-import de.fh.stud.interfaces.IAccessibilityChecker;
-import de.fh.stud.interfaces.ICallbackFunction;
-import de.fh.stud.interfaces.IGoalPredicate;
-import de.fh.stud.interfaces.IHeuristicFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.ICallbackFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IGoalPredicate;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 import javax.swing.*;
 import java.util.*;
@@ -17,7 +17,6 @@ import java.util.*;
 public class Suche {
 
     public static final int MAX_SOLUTION_LIMIT = Integer.MAX_VALUE;
-    public static boolean searchExisting = false;
     public static List<Double> runTimes = new LinkedList<>();
 
     public enum SearchStrategy {
@@ -29,7 +28,7 @@ public class Suche {
 
     private final boolean stateSearch;
     private final boolean withWaitAction;
-    private final IAccessibilityChecker accessCheck;
+    private final IAccessibilityChecker[] accessChecks;
     private final IGoalPredicate goalPred;
     private final IHeuristicFunction heuristicFunc;
     private final ICallbackFunction[] callbackFuncs;
@@ -39,7 +38,7 @@ public class Suche {
         private boolean printResults = false;
         private boolean stateSearch = true;
         private boolean withWaitAction = true;
-        private IAccessibilityChecker accessCheck;
+        private IAccessibilityChecker[] accessChecks;
         private IGoalPredicate goalPred;
         private IHeuristicFunction heuristicFunc;
         private ICallbackFunction[] callbackFuncs;
@@ -48,7 +47,7 @@ public class Suche {
 
         public SucheBuilder(Suchszenario scenario) {
             this.stateSearch = scenario.isStateProblem();
-            this.accessCheck = scenario.getAccessCheck();
+            this.accessChecks = scenario.getAccessCheck();
             this.goalPred = scenario.getGoalPred();
             this.heuristicFunc = scenario.getHeuristicFunc();
             this.callbackFuncs = scenario.getCallbackFuncs();
@@ -77,10 +76,14 @@ public class Suche {
 
         }
 
-        public SucheBuilder setAccessCheck(IAccessibilityChecker accessCheck) {
-            this.accessCheck = accessCheck;
+        public SucheBuilder setAccessChecks(IAccessibilityChecker... accessChecks) {
+            this.accessChecks = accessChecks;
             return this;
+        }
 
+        public SucheBuilder additionalAccessChecks(IAccessibilityChecker... accessChecks) {
+            this.accessChecks = MyUtil.mergeArrays(this.accessChecks, accessChecks);
+            return this;
         }
 
         public SucheBuilder setGoalPred(IGoalPredicate goalPred) {
@@ -107,7 +110,7 @@ public class Suche {
         }
 
         public Suche createSuche() {
-            if (accessCheck == null) {
+            if (accessChecks == null) {
                 throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
             }
             if (goalPred == null) {
@@ -124,20 +127,14 @@ public class Suche {
         }
     }
 
-    public Suche(SucheBuilder b) {
-        if (Suche.searchExisting) {
-            System.err.println("WARNUNG: Eine Suche laeuft bereits!");
-        }
-        else {
-            Suche.searchExisting = true;
-        }
+    private Suche(SucheBuilder b) {
         this.displayResults = b.displayResults;
         this.printResults = b.printResults;
 
         this.stateSearch = b.stateSearch;
         this.withWaitAction = b.withWaitAction;
 
-        this.accessCheck = b.accessCheck;
+        this.accessChecks = b.accessChecks;
         this.goalPred = b.goalPred;
         this.heuristicFunc = b.heuristicFunc;
         this.callbackFuncs = b.callbackFuncs;
@@ -180,8 +177,6 @@ public class Suche {
             JOptionPane.showMessageDialog(jf, debugInfos(strategy, searchResult));
 
         }
-
-        Suche.searchExisting = false;
         return searchResult.getKey();
     }
 
@@ -194,7 +189,6 @@ public class Suche {
 
         while (!openList.isEmpty()) {
             expCand = openList.remove();
-
             if (expCand.isGoalNode(goalPred)) {
                 goalNodes.add(expCand);
                 if (goalNodes.size() >= solutionLimit) {
@@ -205,7 +199,7 @@ public class Suche {
                 closedList.add(expCand);
                 expCand.executeCallbacks(callbackFuncs);
                 expCand
-                        .expand(stateSearch, withWaitAction, accessCheck)
+                        .expand(stateSearch, withWaitAction, accessChecks)
                         .forEach(openList::add);//(openList::add);
             }
         }
@@ -254,8 +248,8 @@ public class Suche {
         return stateSearch;
     }
 
-    public IAccessibilityChecker getAccessCheck() {
-        return accessCheck;
+    public IAccessibilityChecker[] getAccessChecks() {
+        return accessChecks;
     }
 
     public IGoalPredicate getGoalPred() {
