@@ -12,7 +12,7 @@ import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
 import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
-import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
 import de.fh.stud.Suchen.Suchszenario;
 
 import java.util.List;
@@ -55,7 +55,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         // Strategie 2: Suche nach essbaren Dots
         if (loesungsKnoten == null) {
             suche = new Suche.SucheBuilder(
-                    Suchszenario.eatNearestDot(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
+                    Suchszenario.eatNearestDot(IAccessibilityChecker.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                          Suche.SearchStrategy.A_STAR);
         }
@@ -63,7 +63,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
         // Strategie 3: Sammle Powerpille ein, um potentielle Loesungen zu finden
         if (loesungsKnoten == null) {
             suche = new Suche.SucheBuilder(
-                    Suchszenario.eatNearestPowerpill(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
+                    Suchszenario.eatNearestPowerpill(IAccessibilityChecker.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                          Suche.SearchStrategy.A_STAR);
         }
@@ -74,7 +74,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
             if (Felddistanzen.Geisterdistanz.minimumGhostDistance(percept.getPosX(), percept.getPosY(),
                                                                   percept.getGhostInfos()) <= RUN_AWAY_DISTANCE) {
                 suche = new Suche.SucheBuilder(
-                        Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_THREATENS_FIELD, percept.getPosX(),
+                        Suchszenario.runAway(IAccessibilityChecker.AvoidMode.GHOSTS_THREATENS_FIELD, percept.getPosX(),
                                              percept.getPosY())).createSuche();
                 loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
                                              Suche.SearchStrategy.A_STAR);
@@ -103,7 +103,7 @@ public class MyAgent_P_Final extends PacmanAgent_2021 {
 //            System.err.println("-- Gehe Risiko ein !!!!");
             // TODO: Gewichtung nach Geisttyp (eher zum Random, als zum Hunter gehen)
             suche = new Suche.SucheBuilder(
-                    Suchszenario.runAway(Zugangsfilter.AvoidMode.GHOSTS_ON_FIELD, percept.getPosX(), percept.getPosY()))
+                    Suchszenario.runAway(IAccessibilityChecker.AvoidMode.GHOSTS_ON_FIELD, percept.getPosX(), percept.getPosY()))
                     .setWithWaitAction(false)
                     .createSuche();
             loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),

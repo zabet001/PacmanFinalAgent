@@ -2,8 +2,8 @@ package de.fh.stud.Suchen;
 
 import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanTileType;
-import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.CallbackFunktionen;
-import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.ICallbackFunction;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -41,28 +41,13 @@ public class Felddistanzen {
         Suche writeDistances = new Suche.SucheBuilder()
                 .setStateSearch(false)
                 .setWithWaitAction(false)
-                .setAccessChecks(Zugangsfilter.noWall())
-                .setCallbackFuncs(CallbackFunktionen.saveStepCost(distancesForThisPos),
+                .setAccessChecks(IAccessibilityChecker::noWall)
+                .setCallbackFuncs(expCand ->  ICallbackFunction.saveStepCost(expCand, distancesForThisPos),
                                   expCand -> callback.accept(expCand.getCost()))
                 .createSuche();
         writeDistances.start(world, fieldX, fieldY, Suche.SearchStrategy.BREADTH_FIRST);
 
         return distancesForThisPos;
-    }
-
-    public static short calMaxDistance() {
-        short max = 0;
-        for (int i = 0; i < distanceMap.length; i++) {
-            for (int j = 0; j < distanceMap[0].length; j++) {
-                if (distanceMap[i][j] != null) {
-                    if (calMaxDistance(i, j) > max) {
-                        max = calMaxDistance(i, j);
-                    }
-                }
-            }
-        }
-
-        return max;
     }
 
     public static short calMaxDistance(int posX, int posY) {

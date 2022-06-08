@@ -11,7 +11,7 @@ import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Suche;
-import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.Zugangsfilter;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
 import de.fh.stud.Suchen.Suchszenario;
 
@@ -43,7 +43,7 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
             int goalx = 13;
             int goaly = 1;
 
-            Suche suche = new Suche.SucheBuilder(Suchszenario.eatAllDots(Zugangsfilter.AvoidMode.ONLY_WALLS))
+            Suche suche = new Suche.SucheBuilder(Suchszenario.eatAllDots(IAccessibilityChecker.AvoidMode.ONLY_WALLS))
                     .setWithWaitAction(false)
                     .setPrintResults(true)
                     .setDisplayResults(true)
