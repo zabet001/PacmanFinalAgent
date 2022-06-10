@@ -16,256 +16,257 @@ import java.util.*;
 
 public class Suche {
 
-    public static final int MAX_SOLUTION_LIMIT = Integer.MAX_VALUE;
-    public static List<Double> runTimes = new LinkedList<>();
+	public static final int MAX_SOLUTION_LIMIT = Integer.MAX_VALUE;
+	public static List<Double> runTimes = new LinkedList<>();
 
-    public enum SearchStrategy {
-        DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
-    }
+	public enum SearchStrategy {
+		DEPTH_FIRST, BREADTH_FIRST, GREEDY, UCS, A_STAR
+	}
 
-    private final boolean displayResults;
-    private final boolean printResults;
+	private final boolean displayResults;
+	private final boolean printResults;
 
-    private final boolean stateSearch;
-    private final boolean withWaitAction;
-    private final IAccessibilityChecker[] accessChecks;
-    private final IGoalPredicate goalPred;
-    private final IHeuristicFunction heuristicFunc;
-    private final ICallbackFunction[] callbackFuncs;
+	private final boolean stateSearch;
+	private final boolean withWaitAction;
+	private final IAccessibilityChecker[] accessChecks;
+	private final IGoalPredicate goalPred;
+	private final IHeuristicFunction heuristicFunc;
+	private final ICallbackFunction[] callbackFuncs;
 
-    public static final class SucheBuilder {
-        private boolean displayResults = false;
-        private boolean printResults = false;
-        private boolean stateSearch = true;
-        private boolean withWaitAction = true;
-        private IAccessibilityChecker[] accessChecks;
-        private IGoalPredicate goalPred;
-        private IHeuristicFunction heuristicFunc;
-        private ICallbackFunction[] callbackFuncs;
+	public static final class SucheBuilder {
+		private boolean displayResults = false;
+		private boolean printResults = false;
+		private boolean stateSearch = true;
+		private boolean withWaitAction = true;
+		private IAccessibilityChecker[] accessChecks;
+		private IGoalPredicate goalPred;
+		private IHeuristicFunction heuristicFunc;
+		private ICallbackFunction[] callbackFuncs;
 
-        public SucheBuilder() {}
+		public SucheBuilder() {}
 
-        public SucheBuilder(Suchszenario scenario) {
-            this.stateSearch = scenario.isStateProblem();
-            this.accessChecks = scenario.getAccessCheck();
-            this.goalPred = scenario.getGoalPred();
-            this.heuristicFunc = scenario.getHeuristicFunc();
-            this.callbackFuncs = scenario.getCallbackFuncs();
-        }
+		public SucheBuilder(Suchszenario scenario) {
+			this.stateSearch = scenario.isStateProblem();
+			this.accessChecks = scenario.getAccessCheck();
+			this.goalPred = scenario.getGoalPred();
+			this.heuristicFunc = scenario.getHeuristicFunc();
+			this.callbackFuncs = scenario.getCallbackFuncs();
+		}
 
-        public SucheBuilder setDisplayResults(boolean displayResults) {
-            this.displayResults = displayResults;
-            return this;
-        }
+		public SucheBuilder setDisplayResults(boolean displayResults) {
+			this.displayResults = displayResults;
+			return this;
+		}
 
-        public SucheBuilder setPrintResults(boolean printResults) {
-            this.printResults = printResults;
-            return this;
+		public SucheBuilder setPrintResults(boolean printResults) {
+			this.printResults = printResults;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder setStateSearch(boolean stateSearch) {
-            this.stateSearch = stateSearch;
-            return this;
+		public SucheBuilder setStateSearch(boolean stateSearch) {
+			this.stateSearch = stateSearch;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder setWithWaitAction(boolean withWaitAction) {
-            this.withWaitAction = withWaitAction;
-            return this;
+		public SucheBuilder setWithWaitAction(boolean withWaitAction) {
+			this.withWaitAction = withWaitAction;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder setAccessChecks(IAccessibilityChecker... accessChecks) {
-            this.accessChecks = accessChecks;
-            return this;
-        }
+		public SucheBuilder setAccessChecks(IAccessibilityChecker... accessChecks) {
+			this.accessChecks = accessChecks;
+			return this;
+		}
 
-        public SucheBuilder additionalAccessChecks(IAccessibilityChecker... accessChecks) {
-            this.accessChecks = MyUtil.mergeArrays(this.accessChecks, accessChecks);
-            return this;
-        }
+		public SucheBuilder additionalAccessChecks(IAccessibilityChecker... accessChecks) {
+			this.accessChecks = MyUtil.mergeArrays(this.accessChecks, accessChecks);
+			return this;
+		}
 
-        public SucheBuilder setGoalPred(IGoalPredicate goalPred) {
-            this.goalPred = goalPred;
-            return this;
+		public SucheBuilder setGoalPred(IGoalPredicate goalPred) {
+			this.goalPred = goalPred;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder setHeuristicFunc(IHeuristicFunction heuristicFunc) {
-            this.heuristicFunc = heuristicFunc;
-            return this;
+		public SucheBuilder setHeuristicFunc(IHeuristicFunction heuristicFunc) {
+			this.heuristicFunc = heuristicFunc;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder setCallbackFuncs(ICallbackFunction... callbackFuncs) {
-            this.callbackFuncs = callbackFuncs;
-            return this;
+		public SucheBuilder setCallbackFuncs(ICallbackFunction... callbackFuncs) {
+			this.callbackFuncs = callbackFuncs;
+			return this;
 
-        }
+		}
 
-        public SucheBuilder additionalCallbackFuncs(ICallbackFunction... callbackFuncs) {
-            this.callbackFuncs = MyUtil.mergeArrays(this.callbackFuncs, callbackFuncs);
-            return this;
-        }
+		public SucheBuilder additionalCallbackFuncs(ICallbackFunction... callbackFuncs) {
+			this.callbackFuncs = MyUtil.mergeArrays(this.callbackFuncs, callbackFuncs);
+			return this;
+		}
 
-        public Suche createSuche() {
-            if (accessChecks == null) {
-                throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
-            }
-            if (goalPred == null) {
-                goalPred = node -> false;
-            }
-            if (heuristicFunc == null) {
-                heuristicFunc = node -> 0;
-            }
-            if (callbackFuncs == null) {
-                callbackFuncs = new ICallbackFunction[]{expCand -> {}};
-            }
+		public Suche createSuche() {
+			if (accessChecks == null) {
+				throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
+			}
+			if (goalPred == null) {
+				goalPred = node -> false;
+			}
+			if (heuristicFunc == null) {
+				heuristicFunc = node -> 0;
+			}
+			if (callbackFuncs == null) {
+				callbackFuncs = new ICallbackFunction[]{expCand -> {}};
+			}
 
-            return new Suche(this);
-        }
-    }
+			return new Suche(this);
+		}
+	}
 
-    private Suche(SucheBuilder b) {
-        this.displayResults = b.displayResults;
-        this.printResults = b.printResults;
+	private Suche(SucheBuilder b) {
+		this.displayResults = b.displayResults;
+		this.printResults = b.printResults;
 
-        this.stateSearch = b.stateSearch;
-        this.withWaitAction = b.withWaitAction;
+		this.stateSearch = b.stateSearch;
+		this.withWaitAction = b.withWaitAction;
 
-        this.accessChecks = b.accessChecks;
-        this.goalPred = b.goalPred;
-        this.heuristicFunc = b.heuristicFunc;
-        this.callbackFuncs = b.callbackFuncs;
-    }
+		this.accessChecks = b.accessChecks;
+		this.goalPred = b.goalPred;
+		this.heuristicFunc = b.heuristicFunc;
+		this.callbackFuncs = b.callbackFuncs;
+	}
 
-    public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy) {
-        List<Knoten> ret = start(world, posX, posY, strategy, 1);
-        return ret.size() > 0 ? ret.get(0) : null;
-    }
+	public Knoten start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy) {
+		List<Knoten> ret = start(world, posX, posY, strategy, 1);
+		return ret.size() > 0 ? ret.get(0) : null;
+	}
 
-    public Knoten start(byte[][] world, int posX, int posY, SearchStrategy strategy) {
-        List<Knoten> ret = start(world, posX, posY, strategy, 1);
-        return ret.size() > 0 ? ret.get(0) : null;
-    }
+	public Knoten start(byte[][] world, int posX, int posY, SearchStrategy strategy) {
+		List<Knoten> ret = start(world, posX, posY, strategy, 1);
+		return ret.size() > 0 ? ret.get(0) : null;
+	}
 
-    public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy,
-                              int solutionLimit) {
-        return start(MyUtil.createByteView(world), posX, posY, strategy, solutionLimit);
-    }
+	public List<Knoten> start(PacmanTileType[][] world, int posX, int posY, SearchStrategy strategy,
+							  int solutionLimit) {
+		return start(MyUtil.createByteView(world), posX, posY, strategy, solutionLimit);
+	}
 
-    public List<Knoten> start(byte[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit) {
-        Knoten rootNode = Knoten.generateRoot(stateSearch, world, posX, posY);
+	public List<Knoten> start(byte[][] world, int posX, int posY, SearchStrategy strategy, int solutionLimit) {
+		Knoten rootNode = Knoten.generateRoot(stateSearch, world, posX, posY);
 
-        long startTime = System.nanoTime();
-        AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> searchResult = beginSearch(rootNode,
-                                                                                              OpenList.buildOpenList(
-                                                                                                      strategy,
-                                                                                                      heuristicFunc),
-                                                                                              ClosedList.buildClosedList(
-                                                                                                      isStateSearch(),
-                                                                                                      world),
-                                                                                              solutionLimit, startTime);
+		long startTime = System.nanoTime();
+		AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> searchResult = beginSearch(rootNode,
+																							  OpenList.buildOpenList(
+																									  strategy,
+																									  heuristicFunc),
+																							  ClosedList.buildClosedList(
+																									  isStateSearch(),
+																									  world),
+																							  solutionLimit,
+																							  startTime);
 
-        if (printResults) {
-            System.out.println(debugInfos(strategy, searchResult));
-        }
-        if (displayResults) {
-            JFrame jf = new JFrame();
-            jf.setAlwaysOnTop(true);
-            JOptionPane.showMessageDialog(jf, debugInfos(strategy, searchResult));
+		if (printResults) {
+			System.out.println(debugInfos(strategy, searchResult));
+		}
+		if (displayResults) {
+			JFrame jf = new JFrame();
+			jf.setAlwaysOnTop(true);
+			JOptionPane.showMessageDialog(jf, debugInfos(strategy, searchResult));
 
-        }
-        return searchResult.getKey();
-    }
+		}
+		return searchResult.getKey();
+	}
 
-    private AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> beginSearch(Knoten startNode, OpenList openList,
-                                                                                   ClosedList closedList,
-                                                                                   int solutionLimit, long startTime) {
-        openList.add(startNode);
-        Knoten expCand;
-        List<Knoten> goalNodes = new LinkedList<>();
+	private AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> beginSearch(Knoten startNode, OpenList openList,
+																				   ClosedList closedList,
+																				   int solutionLimit, long startTime) {
+		openList.add(startNode);
+		Knoten expCand;
+		List<Knoten> goalNodes = new LinkedList<>();
 
-        while (!openList.isEmpty()) {
-            expCand = openList.remove();
-            if (expCand.isGoalNode(goalPred)) {
-                goalNodes.add(expCand);
-                if (goalNodes.size() >= solutionLimit) {
-                    break;
-                }
-            }
-            if (!closedList.contains(expCand)) {
-                closedList.add(expCand);
-                expCand.executeCallbacks(callbackFuncs);
-                expCand
-                        .expand(stateSearch, withWaitAction, accessChecks)
-                        .forEach(openList::add);//(openList::add);
-            }
-        }
+		while (!openList.isEmpty()) {
+			expCand = openList.remove();
+			if (expCand.isGoalNode(goalPred)) {
+				goalNodes.add(expCand);
+				if (goalNodes.size() >= solutionLimit) {
+					break;
+				}
+			}
+			if (!closedList.contains(expCand)) {
+				closedList.add(expCand);
+				expCand.executeCallbacks(callbackFuncs);
+				expCand
+						.expand(stateSearch, withWaitAction, accessChecks)
+						.forEach(openList::add);//(openList::add);
+			}
+		}
 
-        return new AbstractMap.SimpleEntry<>(goalNodes, searchResultInfos(startTime, goalNodes.size(), openList.size(),
-                                                                          closedList.size()));
-    }
+		return new AbstractMap.SimpleEntry<>(goalNodes, searchResultInfos(startTime, goalNodes.size(), openList.size(),
+																		  closedList.size()));
+	}
 
-    private Map<String, Double> searchResultInfos(long startingTime, int goalListSize, int openListSize,
-                                                  int closedListSize) {
-        return new LinkedHashMap<>() {{
-            put("Rechenzeit in ms.", Util.timeSince(startingTime));
-            put("Anzahl gefundener Loesungen", (double) goalListSize);
-            put("Groesse der openList", (double) openListSize);
-            put("Groesse der closedList", (double) closedListSize);
+	private Map<String, Double> searchResultInfos(long startingTime, int goalListSize, int openListSize,
+												  int closedListSize) {
+		return new LinkedHashMap<>() {{
+			put("Rechenzeit in ms.", Util.timeSince(startingTime));
+			put("Anzahl gefundener Loesungen", (double) goalListSize);
+			put("Groesse der openList", (double) openListSize);
+			put("Groesse der closedList", (double) closedListSize);
 
-        }};
-    }
+		}};
+	}
 
-    private String debugInfos(SearchStrategy strategy,
-                              AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> result) {
-        StringBuilder report = new StringBuilder(String.format("""
-                                                                       Ziel wurde %sgefunden
-                                                                       Suchalgorithmus: %s
-                                                                       Suchart: %s
-                                                                       """, result
-                                                                       .getKey()
-                                                                       .size() != 0 ? "" : "nicht ", strategy,
-                                                               isStateSearch() ? "Zustandssuche" : "Wegsuche"));
-        for (Map.Entry<String, Double> info_value : result
-                .getValue()
-                .entrySet()) {
-            // Anhaengende nullen nach dem Komma entfernen
-            String val = String.format("%,.3f", info_value.getValue());
-            int i = val.length() - 1;
-            while (val.charAt(i) == '0')
-                i--;
-            val = val.substring(0, (val.charAt(i) == ',' ? i : i + 1));
+	private String debugInfos(SearchStrategy strategy,
+							  AbstractMap.SimpleEntry<List<Knoten>, Map<String, Double>> result) {
+		StringBuilder report = new StringBuilder(String.format("""
+																	   Ziel wurde %sgefunden
+																	   Suchalgorithmus: %s
+																	   Suchart: %s
+																	   """, result
+																	   .getKey()
+																	   .size() != 0 ? "" : "nicht ", strategy,
+															   isStateSearch() ? "Zustandssuche" : "Wegsuche"));
+		for (Map.Entry<String, Double> info_value : result
+				.getValue()
+				.entrySet()) {
+			// Anhaengende nullen nach dem Komma entfernen
+			String val = String.format("%,.3f", info_value.getValue());
+			int i = val.length() - 1;
+			while (val.charAt(i) == '0')
+				i--;
+			val = val.substring(0, (val.charAt(i) == ',' ? i : i + 1));
 
-            report.append(String.format("%s: %s\n", info_value.getKey(), val));
-        }
-        return report.toString();
-    }
+			report.append(String.format("%s: %s\n", info_value.getKey(), val));
+		}
+		return report.toString();
+	}
 
-    public boolean isStateSearch() {
-        return stateSearch;
-    }
+	public boolean isStateSearch() {
+		return stateSearch;
+	}
 
-    public IAccessibilityChecker[] getAccessChecks() {
-        return accessChecks;
-    }
+	public IAccessibilityChecker[] getAccessChecks() {
+		return accessChecks;
+	}
 
-    public IGoalPredicate getGoalPred() {
-        return goalPred;
-    }
+	public IGoalPredicate getGoalPred() {
+		return goalPred;
+	}
 
-    public IHeuristicFunction getHeuristicFunc() {
-        return heuristicFunc;
-    }
+	public IHeuristicFunction getHeuristicFunc() {
+		return heuristicFunc;
+	}
 
-    public ICallbackFunction[] getCallbackFuncs() {
-        return callbackFuncs;
-    }
+	public ICallbackFunction[] getCallbackFuncs() {
+		return callbackFuncs;
+	}
 
-    public boolean isWithWaitAction() {
-        return withWaitAction;
-    }
+	public boolean isWithWaitAction() {
+		return withWaitAction;
+	}
 
 }

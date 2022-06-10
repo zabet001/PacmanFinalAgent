@@ -4,18 +4,18 @@ import de.fh.pacman.enums.PacmanTileType;
 
 public class BaumTest {
 
-    public static void main(String[] args) {
-        //Anfangszustand nach Aufgabe
-        PacmanTileType[][] view = {{PacmanTileType.WALL, PacmanTileType.WALL, PacmanTileType.WALL,
-                PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.EMPTY, PacmanTileType.DOT,
-                PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.DOT, PacmanTileType.WALL,
-                PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.WALL, PacmanTileType.WALL,
-                PacmanTileType.WALL}};
+	public static void main(String[] args) {
+		//Anfangszustand nach Aufgabe
+		PacmanTileType[][] view = {{PacmanTileType.WALL, PacmanTileType.WALL, PacmanTileType.WALL,
+				PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.EMPTY, PacmanTileType.DOT,
+				PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.DOT, PacmanTileType.WALL,
+				PacmanTileType.WALL}, {PacmanTileType.WALL, PacmanTileType.WALL, PacmanTileType.WALL,
+				PacmanTileType.WALL}};
 
-        //Startposition des Pacman
-        int posX = 1, posY = 1;
+		//Startposition des Pacman
+		int posX = 1, posY = 1;
 
-        // Um Code laufen zu lassen: Attribute auf public umaendern
+		// Um Code laufen zu lassen: Attribute auf public umaendern
 /**     Suche.ACCESS_CHECK = Zugangsfilter.noWall();
  Suche.HEURISTIC_FUNC = node -> 0;
 
@@ -28,5 +28,5 @@ public class BaumTest {
  Util.printView(MyUtil.reformatToTileType(expCand.getView()));
  expCand.expand().forEach(child -> expChildren.add( child));
  }*/
-    }
+	}
 }

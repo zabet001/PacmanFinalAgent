@@ -105,9 +105,9 @@ public class Sackgassen {
 				.setAccessChecks(IAccessibilityChecker::noWall,
 								 (node, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY] == 0)
 				// Andere Sackgassen sollen als Waende betrachtet werden
-				.setGoalPred(node ->  IGoalPredicate.minimumNeighbours(node, 2, IAccessibilityChecker::noWall,
-																	   (node2, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY]
-																	  == 0))
+				.setGoalPred(node -> IGoalPredicate.minimumNeighbours(node, 2, IAccessibilityChecker::noWall,
+																	  (node2, newPosX, newPosY) ->
+																			  deadEndDepth[newPosX][newPosY] == 0))
 				.setStateSearch(false)
 				.setWithWaitAction(false)
 				.createSuche();
@@ -132,7 +132,8 @@ public class Sackgassen {
 				.setStateSearch(false)
 				.setWithWaitAction(false)
 				.setAccessChecks(IAccessibilityChecker::noWall,
-								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX, newPosY,
+								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX,
+																									newPosY,
 																									oneWayGate))
 				.setCallbackFuncs(
 						expCand -> deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (expCand.getCost() + 1),
@@ -148,7 +149,8 @@ public class Sackgassen {
 		}
 		return new Suche.SucheBuilder(Suchszenario.eatAllDots(IAccessibilityChecker.AvoidMode.ONLY_WALLS))
 				.setAccessChecks(IAccessibilityChecker::noWall,
-								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX, newPosY,
+								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX,
+																									newPosY,
 																									deadEndEntry[posX][posY]))
 				.setWithWaitAction(false)
 				.createSuche()

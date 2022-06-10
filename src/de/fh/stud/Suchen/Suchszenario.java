@@ -1,7 +1,10 @@
 package de.fh.stud.Suchen;
 
 import de.fh.stud.GameStateObserver;
-import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.*;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IAccessibilityChecker;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.ICallbackFunction;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IGoalPredicate;
+import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 public class Suchszenario {
 	private final IAccessibilityChecker[] accessCheck;
@@ -131,7 +134,8 @@ public class Suchszenario {
 				.build();
 	}
 
-	public static Suchszenario eatUpToNDots(int amount, int currentDotAmount, IAccessibilityChecker.AvoidMode avoidMode) {
+	public static Suchszenario eatUpToNDots(int amount, int currentDotAmount,
+											IAccessibilityChecker.AvoidMode avoidMode) {
 		return new SuchszenarioBuilder()
 				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(node -> IGoalPredicate.amountOfDotsEaten(node, amount, currentDotAmount))
