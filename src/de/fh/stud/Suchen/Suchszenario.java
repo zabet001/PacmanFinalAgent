@@ -7,23 +7,23 @@ import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IGoalPredicate;
 import de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen.IHeuristicFunction;
 
 public class Suchszenario {
-	private final IAccessibilityChecker[] accessCheck;
+	private final IAccessibilityChecker[] accessChecks;
 	private final IGoalPredicate goalPred;
-	private final IHeuristicFunction heuristicFunc;
+	private final IHeuristicFunction[] heuristicFuncs;
 	private final ICallbackFunction[] callbackFuncs;
 	private final boolean stateProblem;
 	private final boolean withWaitAction;
 
 	public static final class SuchszenarioBuilder {
-		private IAccessibilityChecker[] accessCheck;
+		private IAccessibilityChecker[] accessChecks;
 		private IGoalPredicate goalPred;
-		private IHeuristicFunction heuristicFunc;
+		private IHeuristicFunction[] heuristicFuncs;
 		private ICallbackFunction[] callbackFuncs;
 		private boolean stateProblem = true;
 		private boolean withWaitAction = true;
 
-		private SuchszenarioBuilder setAccessCheck(IAccessibilityChecker... accessCheck) {
-			this.accessCheck = accessCheck;
+		private SuchszenarioBuilder setAccessChecks(IAccessibilityChecker... accessChecks) {
+			this.accessChecks = accessChecks;
 			return this;
 		}
 
@@ -32,8 +32,8 @@ public class Suchszenario {
 			return this;
 		}
 
-		private SuchszenarioBuilder setHeuristicFunc(IHeuristicFunction heuristicFunc) {
-			this.heuristicFunc = heuristicFunc;
+		private SuchszenarioBuilder setHeuristicFuncs(IHeuristicFunction... heuristicFuncs) {
+			this.heuristicFuncs = heuristicFuncs;
 			return this;
 		}
 
@@ -53,126 +53,106 @@ public class Suchszenario {
 		}
 
 		public Suchszenario build() {
-			if (accessCheck == null) {
+			if (accessChecks == null) {
 				throw new IllegalArgumentException("Missing " + IAccessibilityChecker.class.getSimpleName());
 			}
 			return new Suchszenario(this);
 		}
 	}
 
-	// region Konstruktoren
 	private Suchszenario(SuchszenarioBuilder b) {
-		this.accessCheck = b.accessCheck;
+		this.accessChecks = b.accessChecks;
 		this.goalPred = b.goalPred;
-		this.heuristicFunc = b.heuristicFunc;
+		this.heuristicFuncs = b.heuristicFuncs;
 		this.callbackFuncs = b.callbackFuncs;
 
 		this.stateProblem = b.stateProblem;
 		this.withWaitAction = b.withWaitAction;
 	}
 
-	public Suchszenario(IAccessibilityChecker[] accessCheck, IGoalPredicate goalPred,
-						IHeuristicFunction heuristicFunc) {
-		this(true, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
-	}
-
-	public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, IGoalPredicate goalPred,
-						IHeuristicFunction heuristicFunc) {
-		this(stateProblem, accessCheck, true, goalPred, heuristicFunc, (ICallbackFunction[]) null);
-	}
-
-	public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, boolean withWaitAction,
-						IGoalPredicate goalPred, IHeuristicFunction heuristicFunc) {
-		this(stateProblem, accessCheck, withWaitAction, goalPred, heuristicFunc, (ICallbackFunction[]) null);
-
-	}
-
-	public Suchszenario(boolean stateProblem, IAccessibilityChecker[] accessCheck, boolean withWaitAction,
-						IGoalPredicate goalPred, IHeuristicFunction heuristicFunc,
-						ICallbackFunction... callbackFuncs) {
-		this.stateProblem = stateProblem;
-		this.accessCheck = accessCheck;
-		this.withWaitAction = withWaitAction;
-		this.goalPred = goalPred;
-		this.heuristicFunc = heuristicFunc;
-		this.callbackFuncs = callbackFuncs;
-	}
-
-	//endregion
-
 	public static Suchszenario runAway(IAccessibilityChecker.AvoidMode avoidMode, int startPosX, int startPosY) {
 		return new SuchszenarioBuilder()
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(node -> IGoalPredicate.didAnAction(node, startPosX, startPosY))
-				.setHeuristicFunc(node -> IHeuristicFunction.distanceToCloserGhosts(node, GameStateObserver
-						.getGameState()
-						.getNewPercept()
-						.getGhostInfos()))
+				.setHeuristicFuncs(IHeuristicFunction::deadEndDepth,
+								   node -> IHeuristicFunction.invGhostsDistsAsc(node,
+																				GameStateObserver
+																						.getGameState()
+																						.getNewPercept()
+																						.getGhostInfos()),
+								   IHeuristicFunction::isDot)
 				.build();
+
 	}
 
 	public static Suchszenario eatAllDots(IAccessibilityChecker.AvoidMode avoidMode) {
 		return new SuchszenarioBuilder()
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(IGoalPredicate::allDotsEaten)
-				.setHeuristicFunc(IHeuristicFunction::remainingDots)
+				.setHeuristicFuncs(IHeuristicFunction::remainingDots)
 				.build();
 	}
 
 	public static Suchszenario eatNearestPowerpill(IAccessibilityChecker.AvoidMode avoidMode) {
 		return new SuchszenarioBuilder()
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(IGoalPredicate::powerpillEaten)
+				.setHeuristicFuncs(IHeuristicFunction::normedInvGhostsDistsAsc)
 				.build();
 	}
 
 	public static Suchszenario eatNearestDot(IAccessibilityChecker.AvoidMode avoidMode) {
 		return new SuchszenarioBuilder()
 				.setGoalPred(IGoalPredicate::dotEaten)
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
-				// .setHeuristicFunc(Heuristikfunktionen.isDeadEndField())
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
+				.setHeuristicFuncs(
+						// Sackgassen bevorzugen, wenn sie komplett abgefressen werden koennen
+						node -> IHeuristicFunction.canClearDeadEnd(node,
+																   GameStateObserver
+																		   .getGameState()
+																		   .getNewPercept()
+																		   .getGhostInfos()),
+						// Powerpillen nicht grundlos fressen
+						node -> 1 - IHeuristicFunction.isPowerpill(node),
+						// Abstand zu Geistern vergroessern
+						IHeuristicFunction::normedInvGhostsDistsAsc)
 				.build();
 	}
 
 	public static Suchszenario eatUpToNDots(int amount, int currentDotAmount,
 											IAccessibilityChecker.AvoidMode avoidMode) {
 		return new SuchszenarioBuilder()
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(node -> IGoalPredicate.amountOfDotsEaten(node, amount, currentDotAmount))
-				.setHeuristicFunc(IHeuristicFunction::remainingDots)
+
+				.setHeuristicFuncs(node -> IHeuristicFunction.normedRemainingDots(node, currentDotAmount),
+								   IHeuristicFunction::normedInvGhostsDistsAsc,
+								   IHeuristicFunction::deadEndDepth)
 				.build();
 	}
 
 	public static Suchszenario reachDestination(IAccessibilityChecker.AvoidMode avoidMode, int goalX, int goalY) {
 		return new SuchszenarioBuilder()
-				.setAccessCheck(IAccessibilityChecker.avoidThese(avoidMode))
+				.setAccessChecks(IAccessibilityChecker.avoidThese(avoidMode))
 				.setGoalPred(node -> IGoalPredicate.reachedDestination(node, goalX, goalY))
-				.setHeuristicFunc(node -> IHeuristicFunction.manhattanToTarget(node, goalX, goalY))
+				.setHeuristicFuncs(node -> IHeuristicFunction.manhattanDist(node, goalX, goalY))
 				.setStateProblem(false)
 				.setWithWaitAction(false)
 				.build();
 	}
 
-	public static Suchszenario locateDeadEndExit() {
-		return new SuchszenarioBuilder()
-				.setStateProblem(false)
-				.setWithWaitAction(false)
-				.setAccessCheck(IAccessibilityChecker::noWall)
-				.setGoalPred(node -> Sackgassen.deadEndDepth[node.getPosX()][node.getPosY()] == 0)
-				.build();
-	}
 	// region getter
 
-	public IAccessibilityChecker[] getAccessCheck() {
-		return accessCheck;
+	public IAccessibilityChecker[] getAccessChecks() {
+		return accessChecks;
 	}
 
 	public IGoalPredicate getGoalPred() {
 		return goalPred;
 	}
 
-	public IHeuristicFunction getHeuristicFunc() {
-		return heuristicFunc;
+	public IHeuristicFunction[] getHeuristicFuncs() {
+		return heuristicFuncs;
 	}
 
 	public ICallbackFunction[] getCallbackFuncs() {

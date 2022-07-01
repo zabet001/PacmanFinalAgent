@@ -140,10 +140,13 @@ public class Knoten {
 		List<Knoten> children = new LinkedList<>();
 
 		for (byte[] neighbour : MyUtil.NEIGHBOUR_POS) {
-			if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]), (byte) (posY + neighbour[1]),
+			if (cost < COST_LIMIT && isPassable((byte) (posX + neighbour[0]),
+												(byte) (posY + neighbour[1]),
 												accessibilityCheckers)) {
-				children.add(
-						new Knoten(isStateSearch, this, (byte) (posX + neighbour[0]), (byte) (posY + neighbour[1])));
+				children.add(new Knoten(isStateSearch,
+										this,
+										(byte) (posX + neighbour[0]),
+										(byte) (posY + neighbour[1])));
 			}
 		}
 		if (withWait && cost < COST_LIMIT && isPassable(posX, posY, accessibilityCheckers)) {
@@ -201,8 +204,8 @@ public class Knoten {
 		return ret;
 	}
 
-	public float heuristicalValue(IHeuristicFunction heuristicFunction) {
-		return heuristicFunction.calcHeuristic(this);
+	public float heuristicalValue(IHeuristicFunction[] heuristicFunction, int funcNr) {
+		return heuristicFunction[funcNr].calcHeuristic(this);
 	}
 
 	@Override

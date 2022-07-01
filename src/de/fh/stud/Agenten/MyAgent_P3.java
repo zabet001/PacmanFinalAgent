@@ -1,7 +1,7 @@
 package de.fh.stud.Agenten;
 
 import de.fh.kiServer.agents.Agent;
-import de.fh.pacman.PacmanAgent_2021;
+import de.fh.pacman.PacmanAgent;
 import de.fh.pacman.PacmanGameResult;
 import de.fh.pacman.PacmanPercept;
 import de.fh.pacman.PacmanStartInfo;
@@ -17,7 +17,7 @@ import de.fh.stud.Suchen.Suchszenario;
 
 import java.util.List;
 
-public class MyAgent_P3 extends PacmanAgent_2021 {
+public class MyAgent_P3 extends PacmanAgent {
 
 	private List<PacmanAction> actionSequence;
 	private Knoten loesungsKnoten;
@@ -44,12 +44,14 @@ public class MyAgent_P3 extends PacmanAgent_2021 {
 			int goaly = 1;
 
 			Suche suche = new Suche.SucheBuilder(Suchszenario.eatAllDots(IAccessibilityChecker.AvoidMode.ONLY_WALLS))
-					.setWithWaitAction(false)
+					.noWaitAction()
 					.setPrintResults(true)
 					.setDisplayResults(true)
 					.createSuche();
-			loesungsKnoten = suche.start(percept.getView(), percept.getPosX(), percept.getPosY(),
-										 Suche.SearchStrategy.A_STAR);
+			loesungsKnoten = suche.startFirstSolution(percept.getView(),
+													  percept.getPosX(),
+													  percept.getPosY(),
+													  Suche.SearchStrategy.A_STAR);
 			if (loesungsKnoten != null) {
 				actionSequence = loesungsKnoten.identifyActionSequence();
 			}

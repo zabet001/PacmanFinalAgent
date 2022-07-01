@@ -40,7 +40,7 @@ public class Felddistanzen {
 
 		Suche writeDistances = new Suche.SucheBuilder()
 				.setStateSearch(false)
-				.setWithWaitAction(false)
+				.noWaitAction()
 				.setAccessChecks(IAccessibilityChecker::noWall)
 				.setCallbackFuncs(expCand -> ICallbackFunction.saveStepCost(expCand, distancesForThisPos),
 								  expCand -> callback.accept(expCand.getCost()))

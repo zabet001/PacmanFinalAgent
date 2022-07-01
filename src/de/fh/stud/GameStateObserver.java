@@ -44,7 +44,6 @@ public class GameStateObserver {
 
 	public static void reset() {
 		gameState = new GameState();
-
 	}
 
 	public static GameState getGameState() {

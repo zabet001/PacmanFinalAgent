@@ -113,12 +113,20 @@ public class MyUtil {
 				|| type == PacmanTileType.GHOST_AND_POWERPILL;
 	}
 
-	public static boolean isDotType(PacmanTileType type) {
-		return type == PacmanTileType.DOT || type == PacmanTileType.GHOST_AND_DOT;
+	public static boolean isDotType(PacmanTileType tile) {
+		return tile == PacmanTileType.DOT || tile == PacmanTileType.GHOST_AND_DOT;
 	}
 
-	public static boolean isPowerpillType(PacmanTileType type) {
-		return type == PacmanTileType.POWERPILL || type == PacmanTileType.GHOST_AND_POWERPILL;
+	public static boolean isDotType(byte tile) {
+		return isDotType(MyUtil.byteToTile(tile));
+	}
+
+	public static boolean isPowerpillType(PacmanTileType tile) {
+		return tile == PacmanTileType.POWERPILL || tile == PacmanTileType.GHOST_AND_POWERPILL;
+	}
+
+	public static boolean isPowerpillType(byte tile) {
+		return isPowerpillType(MyUtil.byteToTile(tile));
 	}
 
 	public static boolean ghostNextToPos(byte[][] view, int newPosX, int newPosY) {

@@ -16,8 +16,10 @@ public class Sackgassen {
 	// Hinweis: Wenn die Map ohne Zyklen ist, wird eine Sackgasse nicht als solche erkannt
 	public static byte[][] deadEndDepth;
 	public static Vector2[][] deadEndEntry;
+	private static byte MAX_DEPTH;
 
 	public static void initDeadEndDepth(PacmanTileType[][] world) {
+		MAX_DEPTH = 0;
 		deadEndDepth = new byte[world.length][world[0].length];
 		deadEndEntry = new Vector2[world.length][world[0].length];
 
@@ -29,9 +31,11 @@ public class Sackgassen {
         besuchten Felder markieren mit cost -1
          -> Sackgassen letzter Stufe werden "temporaer geschlossen": mehrstufige sackgassen werden einstufig*/
 		for (int i = 0; i < oneWays.size(); i++) {
-			AbstractMap.SimpleEntry<Vector2, Vector2> oneWayStartTuple = locateStartOfOneWay(world, oneWays
-					.get(i)
-					.getKey().x, oneWays
+			AbstractMap.SimpleEntry<Vector2, Vector2> oneWayStartTuple = locateStartOfOneWay(world,
+																							 oneWays
+																									 .get(i)
+																									 .getKey().x,
+																							 oneWays
 																									 .get(i)
 																									 .getKey().y);
 			if (oneWayStartTuple != null) {
@@ -68,9 +72,11 @@ public class Sackgassen {
 
 		for (int i = 0; i < deadEndEntry[0].length; i++) {
 			for (int j = 0; j < deadEndEntry.length; j++) {
-				System.out.printf("%7s ", world[j][i] == PacmanTileType.WALL ? "[|||||]" :
-						deadEndEntry[j][i] == null ? "       " : String.format("[%d/%d]", deadEndEntry[j][i].x,
-																			   deadEndEntry[j][i].y));
+				System.out.printf("%7s ",
+								  world[j][i] == PacmanTileType.WALL ? "[|||||]" :
+										  deadEndEntry[j][i] == null ? "       " : String.format("[%d/%d]",
+																								 deadEndEntry[j][i].x,
+																								 deadEndEntry[j][i].y));
 			}
 			System.out.println();
 		}
@@ -105,22 +111,25 @@ public class Sackgassen {
 				.setAccessChecks(IAccessibilityChecker::noWall,
 								 (node, newPosX, newPosY) -> deadEndDepth[newPosX][newPosY] == 0)
 				// Andere Sackgassen sollen als Waende betrachtet werden
-				.setGoalPred(node -> IGoalPredicate.minimumNeighbours(node, 2, IAccessibilityChecker::noWall,
+				.setGoalPred(node -> IGoalPredicate.minimumNeighbours(node,
+																	  2,
+																	  IAccessibilityChecker::noWall,
 																	  (node2, newPosX, newPosY) ->
 																			  deadEndDepth[newPosX][newPosY] == 0))
 				.setStateSearch(false)
-				.setWithWaitAction(false)
+				.noWaitAction()
 				.createSuche();
 
-		Knoten oneWayStart = oneWayStartSearch.start(world, posX, posY, Suche.SearchStrategy.DEPTH_FIRST);
+		Knoten oneWayStart = oneWayStartSearch.startFirstSolution(world, posX, posY, Suche.SearchStrategy.DEPTH_FIRST);
 
 		if (oneWayStart == null) {
 			return null;
 		}
 
-		return new AbstractMap.SimpleEntry<>(oneWayStart.getPosition(), oneWayStart
-				.getPred()
-				.getPosition());
+		return new AbstractMap.SimpleEntry<>(oneWayStart.getPosition(),
+											 oneWayStart
+													 .getPred()
+													 .getPosition());
 	}
 
 	/**
@@ -130,17 +139,21 @@ public class Sackgassen {
 	private static void writeOneWayDepth(PacmanTileType[][] world, Vector2 oneWayEntry, Vector2 oneWayGate) {
 		Suche writeDepths = new Suche.SucheBuilder()
 				.setStateSearch(false)
-				.setWithWaitAction(false)
+				.noWaitAction()
 				.setAccessChecks(IAccessibilityChecker::noWall,
-								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX,
+								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(newPosX,
 																									newPosY,
 																									oneWayGate))
-				.setCallbackFuncs(
-						expCand -> deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (expCand.getCost() + 1),
-						expCand -> deadEndEntry[expCand.getPosX()][expCand.getPosY()] = oneWayGate)
+				.setCallbackFuncs(expCand -> deadEndDepth[expCand.getPosX()][expCand.getPosY()] = (byte) (
+										  expCand.getCost() + 1),
+								  expCand -> deadEndEntry[expCand.getPosX()][expCand.getPosY()] = oneWayGate,
+								  expCand -> {
+									  if ((byte) (expCand.getCost() + 1) > MAX_DEPTH) {
+										  MAX_DEPTH = (byte) (expCand.getCost() + 1);
+									  }
+								  })
 				.createSuche();
 		writeDepths.start(world, oneWayEntry.x, oneWayEntry.y, Suche.SearchStrategy.DEPTH_FIRST);
-
 	}
 
 	public static boolean allDotsInThisDeadEnd(byte[][] world, byte posX, byte posY) {
@@ -149,12 +162,12 @@ public class Sackgassen {
 		}
 		return new Suche.SucheBuilder(Suchszenario.eatAllDots(IAccessibilityChecker.AvoidMode.ONLY_WALLS))
 				.setAccessChecks(IAccessibilityChecker::noWall,
-								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(node, newPosX,
+								 (node, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(newPosX,
 																									newPosY,
 																									deadEndEntry[posX][posY]))
-				.setWithWaitAction(false)
+				.noWaitAction()
 				.createSuche()
-				.start(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
+				.startFirstSolution(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
 	}
 
 	public static boolean canEatAllDotsInOneGo(byte[][] world, byte posX, byte posY) {
@@ -169,8 +182,12 @@ public class Sackgassen {
 					}
 					return true;
 				})
-				.setWithWaitAction(false)
+				.noWaitAction()
 				.createSuche()
-				.start(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
+				.startFirstSolution(world, posX, posY, Suche.SearchStrategy.A_STAR) != null;
+	}
+
+	public static byte getMaxDepth() {
+		return MAX_DEPTH;
 	}
 }

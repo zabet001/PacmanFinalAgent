@@ -10,7 +10,7 @@ public abstract class OpenList {
 		this.searchStrategy = searchStrategy;
 	}
 
-	public static OpenList buildOpenList(Suche.SearchStrategy strategy, IHeuristicFunction heuristicFunction) {
+	public static OpenList buildOpenList(Suche.SearchStrategy strategy, IHeuristicFunction[] heuristicFunction) {
 		return switch (strategy) {
 			case DEPTH_FIRST, BREADTH_FIRST -> new UninformedOpenList(strategy);
 			default -> new InformedOpenList(strategy, heuristicFunction);

@@ -1,12 +1,17 @@
 package de.fh.stud.Suchen.Suchkomponenten.Suchfunktionen;
 
 import de.fh.kiServer.util.Vector2;
+import de.fh.pacman.GhostInfo;
 import de.fh.pacman.enums.PacmanTileType;
 import de.fh.stud.GameStateObserver;
 import de.fh.stud.MyUtil;
 import de.fh.stud.Suchen.Felddistanzen;
 import de.fh.stud.Suchen.Sackgassen;
+import de.fh.stud.Suchen.Suche;
 import de.fh.stud.Suchen.Suchkomponenten.Knoten;
+
+import java.util.Comparator;
+import java.util.List;
 
 public interface IAccessibilityChecker {
 	boolean isAccessible(Knoten node, byte newPosX, byte newPosY);
@@ -54,10 +59,12 @@ public interface IAccessibilityChecker {
 		}
 
 		// Geist neben dem Feld? Sehr wahrscheinlicher Tod
-		if (MyUtil.ghostNextToPos(newPosX, newPosY, GameStateObserver
-				.getGameState()
-				.getNewPercept()
-				.getGhostInfos())) {
+		if (MyUtil.ghostNextToPos(newPosX,
+								  newPosY,
+								  GameStateObserver
+										  .getGameState()
+										  .getNewPercept()
+										  .getGhostInfos())) {
 			return false;
 		}
 
@@ -91,11 +98,58 @@ public interface IAccessibilityChecker {
 		return MyUtil.byteToTile(node.getView()[newPosX][newPosY]) != PacmanTileType.WALL;
 	}
 
-	static boolean excludePositions(Knoten node, byte newPosX, byte newPosY, Vector2... positions) {
+	static boolean excludePositions(byte newPosX, byte newPosY, Vector2... positions) {
 		for (Vector2 pos : positions) {
 			if (pos.x == newPosX && pos.y == newPosY) {
 				return false;
 			}
+		}
+		return true;
+	}
+
+	static boolean clearableDeadEnd(Knoten node, List<GhostInfo> ghosts) {
+		// TODO: Dies funktioniert nicht fuer AccessCheck, wenn in einer Sackgasse gestartet wurde
+		// Keine Sackgasse
+		if (node.getPowerpillTimer() > 0 || Sackgassen.deadEndEntry[node.getPosX()][node.getPosY()] == null) {
+			return true;
+		}
+
+		Suche clearSearch = new Suche.SucheBuilder()
+				.setAccessChecks(IAccessibilityChecker::noWall,
+								 (chilren, newPosX, newPosY) -> IAccessibilityChecker.excludePositions(newPosX,
+																									   newPosY,
+																									   Sackgassen.deadEndEntry[node.getPosX()][node.getPosY()]))
+				.setHeuristicFuncs(IHeuristicFunction::remainingDots)
+				.setGoalPred(IGoalPredicate::dotEaten)
+				.noSolutionLimit()
+				.createSuche();
+		List<Knoten> dotEatenNodes = clearSearch.start(node.getView(),
+													   node.getPosX(),
+													   node.getPosY(),
+													   Suche.SearchStrategy.A_STAR);
+		if (dotEatenNodes.size() == 0) {
+			// Die Suche begann auf dem einzig verbliebenen Dot der Sackgasse
+			if (node.getPred() != null && MyUtil.isDotType(node
+																   .getPred()
+																   .getView()[node.getPosX()][node.getPosY()])) {
+				return true;
+			}
+			// Keine Dots in der Sackgasse gefunden
+			return false;
+		}
+
+		// Die kuerzeste Loesung mit den meisten gefressenen Dots
+		dotEatenNodes.sort(Comparator
+								   .comparingInt(Knoten::getRemainingDots)
+								   .thenComparingInt(Knoten::getCost));
+
+		Knoten fastestSolution = dotEatenNodes.get(0);
+
+		if (Felddistanzen.Geisterdistanz.minimumGhostDistance(Sackgassen.deadEndEntry[node.getPosX()][node.getPosY()].x,
+															  Sackgassen.deadEndEntry[node.getPosX()][node.getPosY()].y,
+															  ghosts) <= fastestSolution.getCost() + 1
+				+ Sackgassen.deadEndDepth[fastestSolution.getPosX()][fastestSolution.getPosY()]) {
+			return false;
 		}
 		return true;
 	}
