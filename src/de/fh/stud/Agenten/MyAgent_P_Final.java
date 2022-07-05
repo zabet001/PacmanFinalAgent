@@ -53,6 +53,8 @@ public class MyAgent_P_Final extends PacmanAgent {
 
 		// Strategie 2: Suche nach essbaren Dots
 		if (loesungsKnoten == null) {
+			// TODO: labyrinth_RR mit Seed 882768753: Sackgasse wird nicht zuerst abgefressen
+			// TODO: nonDangerousEnvironment: wenn powerpille nicht mehr lange haelt (timer < sackgassentiefe + ?): nicht sofort reingehen
 			suche =
 					new Suche.SucheBuilder(Suchszenario.eatNearestDot(IAccessibilityChecker.AvoidMode.GHOSTS_THREATENS_FIELD)).createSuche();
 			loesungsKnoten = suche.startFirstSolution(percept.getView(),

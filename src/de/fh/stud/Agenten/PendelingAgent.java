@@ -42,7 +42,6 @@ public class PendelingAgent extends PacmanAgent {
 	 */
 	@Override
 	public PacmanAction action(PacmanPercept percept, PacmanActionEffect actionEffect) {
-
 		if (percept.getView()[percept.getPosX() + (goingLeft ? -1 : 1)][percept.getPosY()] == PacmanTileType.WALL) {
 			goingLeft = !goingLeft;
 		}
